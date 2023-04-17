@@ -1,0 +1,40 @@
+targets:
+  main:
+    resources:
+      RemotePlace:
+        name: lxatac10
+      NetworkService:
+        address: lxatac-00010.lab2.stw.pengutronix.de
+        username: root
+      RemoteHTTPProvider:
+        host: www.lab.stw.pengutronix.de
+        internal: /var/www/jenkins/
+        external: http://www.lab.stw.pengutronix.de/jenkins/
+    drivers:
+      LXAIOBusPIODriver: {}
+      HTTPProviderDriver: {}
+      NetworkPowerDriver:
+        delay: 5.0
+      SerialDriver:
+        txdelay: 0.02
+      DFUDriver: {}
+      BareboxDriver:
+        prompt: 'barebox@[^:]+:[^ ]+ '
+      AndroidFastbootDriver: {}
+      ShellDriver:
+        prompt: 'root@[^:]+:[^ ]+'
+        login_prompt: ' login: '
+        username: root
+      LXATACStrategy: {}
+    options:
+      ptx-works-available: []
+
+images:
+  tfa: ../images/lxatac/tf-a-stm32mp157c-lxa-tac.stm32
+  mmc_boot_fip: ../images/lxatac/emmc-boot-image-lxatac.fip
+  mmc_boot: ../images/lxatac/emmc-boot-image-lxatac.img
+  mmc: ../images/lxatac/emmc-image-lxatac.simg
+  rauc_bundle: ../images/lxatac/lxatac-core-bundle-base-lxatac.raucb
+
+imports:
+- lxatacstrategy.py
