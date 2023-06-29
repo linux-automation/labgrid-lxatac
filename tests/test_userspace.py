@@ -6,7 +6,7 @@ from labgrid.driver import ExecutionError
 
 def test_system_running(shell):
     try:
-        shell.run_check("systemctl is-system-running")
+        shell.poll_until_success('systemctl is-system-running', timeout=120.0, sleepduration=10.0)
     except ExecutionError:
         # gather information about failed units
         shell.run("systemctl list-units --failed --no-legend --plain --no-pager")

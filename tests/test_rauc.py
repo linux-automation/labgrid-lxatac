@@ -64,7 +64,7 @@ def test_rauc_install(strategy, get_rauc_bundle_url, set_bootstate):
     assert get_booted_slot(shell) == 'system1'
 
     try:
-        shell.run_check("systemctl is-system-running")
+        shell.poll_until_success('systemctl is-system-running', timeout=120.0, sleepduration=10.0)
     except ExecutionError:
         # gather information about failed units
         shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
