@@ -39,7 +39,7 @@ def test_rauc_info_json(shell, get_rauc_bundle_url):
 
     result = shell.run_check('cat /tmp/rauc.json')
     result = json.loads('\n'.join(result))
-    assert 'lxatac' in result['compatible']
+    assert 'Linux Automation GmbH - LXA TAC' in result['compatible']
     assert any('rootfs' in image for image in result['images'])
 
 
