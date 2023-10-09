@@ -99,6 +99,11 @@ class LXATACStrategy(Strategy):
             return
 
         elif status == Status.off:
+            if self.status == Status.shell:
+                # Cleanly shut down the labgrid exporter to help the
+                # coordinator clean up stale resources.
+                self.shell.run("systemctl stop labgrid-exporter", timeout=90)
+
             self.target.deactivate(self.barebox)
             self.target.deactivate(self.shell)
             self.target.deactivate(self.fastboot)
