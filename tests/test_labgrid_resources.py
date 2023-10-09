@@ -5,38 +5,39 @@ from labgrid.resource.remote import RemotePlaceManager
 from labgrid.remote.common import ResourceMatch
 from labgrid.util import Timeout
 
-
-def get_exporter_resources(exporter):
-    """Retrieves all resources from the specified exporter."""
-    rpm = RemotePlaceManager.get()
-    rpm.poll()
-
-    # wait for at least one export
-    timeout = Timeout(30.0)
-    while exporter not in rpm.session.resources:
-        if timeout.expired:
-            pytest.fail(f"No exports from {exporter} within {timeout.timeout} seconds")
-
-        time.sleep(1)
-        rpm.poll()
-
-    time.sleep(10)
-    rpm.poll()
-
-    return rpm.session.resources[exporter]
-
-
 def test_labgrid_resources_simple(strategy, shell):
     """Test non-managed resources."""
-    resources = get_exporter_resources(strategy.target_hostname)
 
-    serial_port = resources["serial"]["RawSerialPort"].asdict()
-    assert serial_port["avail"]
-    assert serial_port["params"]["extra"]["path"].startswith("/dev/ttySTM")
+    def retry_loop():
+        rpm = RemotePlaceManager.get()
+        exporter = strategy.target_hostname
 
-    power_port = resources["dut_power"]["NetworkPowerPort"].asdict()
-    assert power_port["avail"]
-    assert power_port["params"]["model"] == "rest"
+        for _ in range(300):
+            time.sleep(1)
+            rpm.poll()
+
+            try:
+                resources = rpm.session.resources[exporter]
+                serial_port = resources["serial"]["RawSerialPort"]
+                power_port = resources["dut_power"]["NetworkPowerPort"]
+
+                if not serial_port.avail:
+                    continue
+
+                if not power_port.avail:
+                    continue
+
+                return (serial_port.params, power_port.params)
+
+            except Exception as e:
+                pass
+
+        pytest.fail("Failed to get resources, even after trying for 5 minutes")
+
+    serial_port_params, power_port_params = retry_loop()
+
+    assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
+    assert power_port_params["model"] == "rest"
 
     # The GPIOs are claimed by the tacd and should be controlled via it.
     # We need a driver for that
@@ -47,16 +48,34 @@ def test_labgrid_resources_simple(strategy, shell):
 
 def test_labgrid_resources_usb(strategy, shell):
     """Test ManagedResources (udev)."""
-    exporter = strategy.target_hostname
-    groups = get_exporter_resources(exporter)
-    match = ResourceMatch.fromstr(f"{exporter}/lxatac-usb-ports-p*/*")
 
-    usb_resources = []
+    def retry_loop():
+        rpm = RemotePlaceManager.get()
+        exporter = strategy.target_hostname
+        match = ResourceMatch.fromstr(f"{exporter}/lxatac-usb-ports-p*/*")
 
-    for group_name, group in sorted(groups.items()):
-        for resource_name, resource in sorted(group.items()):
-            if match.ismatch((exporter, group_name, resource.cls, resource_name)):
-                usb_resources.append(resource)
+        for _ in range(300):
+            time.sleep(1)
+            rpm.poll()
+
+            try:
+                usb_resources = []
+
+                groups = rpm.session.resources[exporter]
+                for group_name, group in sorted(groups.items()):
+                    for resource_name, resource in sorted(group.items()):
+                        if match.ismatch((exporter, group_name, resource.cls, resource_name)) and resource.avail:
+                            usb_resources.append(resource)
+
+                if len(usb_resources) > 0:
+                    return usb_resources
+
+            except Exception as e:
+                pass
+
+        pytest.fail("Failed to get resources, even after trying for 5 minutes")
+
+    usb_resources = retry_loop()
 
     # make sure at least one USB resource is available
-    assert any(res.asdict()["avail"] for res in usb_resources)
+    assert usb_resources != []
