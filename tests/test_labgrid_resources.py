@@ -20,6 +20,8 @@ def test_labgrid_resources_simple(strategy, shell):
                 resources = rpm.session.resources[exporter]
                 serial_port = resources["serial"]["RawSerialPort"]
                 power_port = resources["dut_power"]["NetworkPowerPort"]
+                out_0 = resources["out_0"]["HttpDigitalOutput"]
+                out_1 = resources["out_0"]["HttpDigitalOutput"]
 
                 if not serial_port.avail:
                     continue
@@ -27,23 +29,23 @@ def test_labgrid_resources_simple(strategy, shell):
                 if not power_port.avail:
                     continue
 
-                return (serial_port.params, power_port.params)
+                if not out_0.avail:
+                    continue
+
+                if not out_1.avail:
+                    continue
+
+                return (serial_port.params, power_port.params, out_0.params, out_1.params)
 
             except Exception as e:
                 pass
 
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
 
-    serial_port_params, power_port_params = retry_loop()
+    serial_port_params, power_port_params, _out_0, _out_1 = retry_loop()
 
     assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
     assert power_port_params["model"] == "rest"
-
-    # The GPIOs are claimed by the tacd and should be controlled via it.
-    # We need a driver for that
-    #for gpio_idx in (0, 1):
-    #    gpio = resources[f"gpio{gpio_idx}"]["SysfsGPIO"].asdict()
-    #    assert gpio["avail"]
 
 
 def test_labgrid_resources_usb(strategy, shell):
