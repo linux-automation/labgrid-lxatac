@@ -23,7 +23,7 @@ def get_json_endpoint(fqdn, endpoint):
     return get_endpoint(fqdn, endpoint).json()
 
 
-def test_tacd_http_temperature(strategy, shell):
+def test_tacd_http_temperature(strategy, online):
     """Test tacd temperature endpoint."""
     res = get_json_endpoint(strategy.network.address, "v1/tac/temperatures/soc")
 
@@ -32,7 +32,7 @@ def test_tacd_http_temperature(strategy, shell):
     assert 0 < res["value"] < 70
 
 
-def test_tacd_http_adc(strategy, shell):
+def test_tacd_http_adc(strategy, online):
     """Test tacd ADC endpoints."""
 
     CHANNELS = (
@@ -55,7 +55,7 @@ def test_tacd_http_adc(strategy, shell):
         assert low <= res["value"] <= high
 
 
-def test_tacd_http_locator(strategy, shell):
+def test_tacd_http_locator(strategy, online):
     """Test tacd locator endpoint."""
     ENDPOINT = "v1/tac/display/locator"
 
@@ -65,7 +65,7 @@ def test_tacd_http_locator(strategy, shell):
         assert res.content == state
 
 
-def test_tacd_http_iobus_fault(strategy, shell):
+def test_tacd_http_iobus_fault(strategy, online):
     """Test tacd iobus fault endpoint."""
     get_endpoint(strategy.network.address, "v1/iobus/feedback/fault")
 
@@ -88,7 +88,7 @@ def test_tacd_http_iobus_fault(strategy, shell):
         "v1/output/out_1/feedback/voltage",
     ))
 ))
-def test_tacd_http_switch_output(strategy, shell, output):
+def test_tacd_http_switch_output(strategy, online, output):
     """Test tacd output switching."""
 
     control, states, feedback = output

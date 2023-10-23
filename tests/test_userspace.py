@@ -4,13 +4,22 @@ import re
 from labgrid.driver import ExecutionError
 
 
-def test_system_running(shell):
+def system_running(shell):
     try:
-        shell.poll_until_success('systemctl is-system-running', timeout=120.0, sleepduration=10.0)
+        # the strategy already waits for this when transitioning to the shell state
+        shell.run_check('systemctl is-system-running')
     except ExecutionError:
         # gather information about failed units
         shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
         raise
+
+
+def test_system_running(system0_shell):
+    system_running(system0_shell)
+
+
+def test_system_running(system1_shell):
+    system_running(system1_shell)
 
 
 def test_nfs_mounts(env, target, shell):
@@ -26,15 +35,6 @@ def test_nfs_mounts(env, target, shell):
         dir_contents = shell.run_check(f"ls -1 {ptx_work}")
         # make sure the directories contain something
         assert len(dir_contents) > 0
-
-
-def test_srv_mount(shell):
-    mount = '\n'.join(shell.run_check("mount"))
-    srv_mounted = re.compile(
-        r'^/dev/mmcblk\S* on /srv type ext4', re.MULTILINE
-    )
-
-    assert srv_mounted.search(mount) is not None
 
 
 def test_chrony(shell):

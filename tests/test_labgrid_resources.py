@@ -5,7 +5,7 @@ from labgrid.resource.remote import RemotePlaceManager
 from labgrid.remote.common import ResourceMatch
 from labgrid.util import Timeout
 
-def test_labgrid_resources_simple(strategy, shell):
+def test_labgrid_resources_simple(strategy, online):
     """Test non-managed resources."""
 
     def retry_loop():
@@ -48,7 +48,7 @@ def test_labgrid_resources_simple(strategy, shell):
     assert power_port_params["model"] == "rest"
 
 
-def test_labgrid_resources_usb(strategy, shell):
+def test_labgrid_resources_usb(strategy, online):
     """Test ManagedResources (udev)."""
 
     def retry_loop():
