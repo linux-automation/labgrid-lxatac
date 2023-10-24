@@ -9,7 +9,7 @@ targets:
       RemoteHTTPProvider:
         host: www.lab.stw.pengutronix.de
         internal: /var/www/jenkins/
-        external: http://www.lab.stw.pengutronix.de/jenkins/
+        external: https://www.lab.stw.pengutronix.de/jenkins/
     drivers:
       LXAIOBusPIODriver: {}
       HTTPProviderDriver: {}
