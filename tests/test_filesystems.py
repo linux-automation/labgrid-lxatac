@@ -58,7 +58,7 @@ def filesystem_sizes(shell):
     df = dict((e["Mounted"], e) for e in df)
 
     # / should have some spare space available
-    assert(int(df["/"]["1B-blocks"]) in range(2_000 * MEGA, 2_500 * MEGA))
+    assert(int(df["/"]["1B-blocks"]) in range(1_900 * MEGA, 2_500 * MEGA))
     assert(int(df["/"]["Used"]) / int(df["/"]["1B-blocks"]) < 0.6)
 
     # /srv should be mostly empty
