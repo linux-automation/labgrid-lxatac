@@ -97,14 +97,6 @@ class LXATACStrategy(Strategy):
         self.fastboot.flash("bbu-mmc", mmc_boot_img)
 
         self.target.deactivate(self.fastboot)
-
-        # mark system0 good / mark system1 bad
-        self.barebox.run_check("state.bootstate.system0.remaining_attempts=3")
-        self.barebox.run_check("state.bootstate.system0.priority=1")
-        self.barebox.run_check("state.bootstate.system1.remaining_attempts=0")
-        self.barebox.run_check("state.bootstate.system1.priority=0")
-        self.barebox.run_check("state -s")
-
         self.target.deactivate(self.barebox)
 
         self.dfu_mode.set(False)
