@@ -31,10 +31,9 @@ def partition_sizes(shell):
         for (name, size) in part_sizes
     )
 
-    assert(part_sizes["/dev/mmcblk1p1"] in range(1 * MEGA, 2 * MEGA))
+    assert(part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA))
     assert(part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA))
-    assert(part_sizes["/dev/mmcblk1p3"] in range(2_000 * MEGA, 2_500 * MEGA))
-    assert(part_sizes["/dev/mmcblk1p4"] in range(8 * GIGA, 16 * GIGA))
+    assert(part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA))
 
 
 def filesystem_sizes(shell):
