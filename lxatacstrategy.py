@@ -111,6 +111,7 @@ class LXATACStrategy(Strategy):
         bundle = self.target.env.config.get_image_path('rauc_bundle')
         bundle_url = self.httpprovider.stage(bundle)
 
+        self.shell.run_check(f'rauc-enable-cert devel.cert.pem')
         self.shell.run_check(f'rauc install {bundle_url}', timeout=600)
 
         self.target.deactivate(self.httpprovider)
