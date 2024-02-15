@@ -3,7 +3,6 @@
 import json
 
 import pytest
-from labgrid.driver import ExecutionError
 
 
 # TODO: we should test if this image can install a recent stable bundle and
