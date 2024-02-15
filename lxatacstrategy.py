@@ -3,6 +3,7 @@ import json
 
 import attr
 
+from labgrid.driver import ExecutionError
 from labgrid.factory import target_factory
 from labgrid.step import step
 from labgrid.strategy import Strategy, StrategyError
@@ -111,8 +112,15 @@ class LXATACStrategy(Strategy):
         bundle = self.target.env.config.get_image_path('rauc_bundle')
         bundle_url = self.httpprovider.stage(bundle)
 
+        self.shell.run_check(f'curl -I "{bundle_url}"')
+
         self.shell.run_check(f'rauc-enable-cert devel.cert.pem')
-        self.shell.run_check(f'rauc install {bundle_url}', timeout=600)
+
+        try:
+            self.shell.run_check(f'rauc install "{bundle_url}"', timeout=600)
+        except ExecutionError:
+            self.shell.run('journalctl --boot --unit rauc.service')
+            raise
 
         self.target.deactivate(self.httpprovider)
 
