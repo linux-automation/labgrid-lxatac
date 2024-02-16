@@ -214,6 +214,9 @@ class LXATACStrategy(Strategy):
 
             self.shell.poll_until_success('ping -c1 _gateway', timeout=60.0)
 
+            # Also make sure we have accurate time, so that TLS works.
+            self.shell.run_check('chronyc waitsync', timeout=60.0)
+
         elif status == Status.system0:
             self.transition(Status.network)
 
