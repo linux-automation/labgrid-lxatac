@@ -20,6 +20,7 @@ targets:
       DFUDriver: {}
       BareboxDriver:
         prompt: 'barebox@[^:]+:[^ ]+ '
+        interrupt: "\x03\r\n"
       AndroidFastbootDriver: {}
       ShellDriver:
         prompt: 'root@[^:]+:[^ ]+'
