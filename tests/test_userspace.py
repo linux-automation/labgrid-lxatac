@@ -42,7 +42,7 @@ def test_chrony(shell):
     chronyc_csv = chronyc.split(",")
 
     # make sure stratum > 0 is used
-    int(chronyc_csv[2]) > 0
+    assert int(chronyc_csv[2]) > 0
 
 
 def test_switch_configuration(shell):
