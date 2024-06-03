@@ -13,11 +13,11 @@ def system_running(shell):
         raise
 
 
-def test_system_running(system0_shell):
+def test_system_running_0(system0_shell):
     system_running(system0_shell)
 
 
-def test_system_running(system1_shell):
+def test_system_running_1(system1_shell):
     system_running(system1_shell)
 
 
