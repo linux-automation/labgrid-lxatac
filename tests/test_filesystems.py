@@ -19,21 +19,14 @@ def partition_sizes(shell):
     part_sizes = shell.run_check("fdisk -l --bytes -o Device,Size /dev/mmcblk1")
 
     # [["/dev/mmcblk1p1", "1048576"], ["/dev/mmcblk1p2", "2147483648"] ...
-    part_sizes = list(
-        line.split()
-        for line in part_sizes
-        if line.startswith("/dev/mmcblk")
-    )
+    part_sizes = list(line.split() for line in part_sizes if line.startswith("/dev/mmcblk"))
 
     # {"/dev/mmcblk1p1": 1048576, "/dev/mmcblk1p2": 2147483648}
-    part_sizes = dict(
-        (name, int(size))
-        for (name, size) in part_sizes
-    )
+    part_sizes = dict((name, int(size)) for (name, size) in part_sizes)
 
-    assert(part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA))
-    assert(part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA))
-    assert(part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA))
+    assert part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
 
 
 def filesystem_sizes(shell):
@@ -48,26 +41,23 @@ def filesystem_sizes(shell):
     df = shell.run_check("df -B1")
 
     # [{"Filesystem": "/dev/root", "1B-blocks": ...}, {"Filesystem": ...
-    df = list(
-        dict(zip(df[0].split(), line.split()))
-        for line in df[1:]
-    )
+    df = list(dict(zip(df[0].split(), line.split())) for line in df[1:])
 
     # {'/': {'Filesystem': '/dev/root', ...
     df = dict((e["Mounted"], e) for e in df)
 
     # / should have some spare space available
-    assert(int(df["/"]["1B-blocks"]) in range(1_900 * MEGA, 2_500 * MEGA))
-    assert(int(df["/"]["Used"]) / int(df["/"]["1B-blocks"]) < 0.6)
+    assert int(df["/"]["1B-blocks"]) in range(1_900 * MEGA, 2_500 * MEGA)
+    assert int(df["/"]["Used"]) / int(df["/"]["1B-blocks"]) < 0.6
 
     # /srv should be mostly empty
-    assert(int(df["/srv"]["1B-blocks"]) in range(8 * GIGA, 16 * GIGA))
-    assert(int(df["/srv"]["Used"]) / int(df["/srv"]["1B-blocks"]) < 0.1)
+    assert int(df["/srv"]["1B-blocks"]) in range(8 * GIGA, 16 * GIGA)
+    assert int(df["/srv"]["Used"]) / int(df["/srv"]["1B-blocks"]) < 0.1
 
     # /run, /tmp, /var/volatile should be mostly empty
-    assert(int(df["/run"]["Used"]) / int(df["/run"]["1B-blocks"]) < 0.2)
-    assert(int(df["/tmp"]["Used"]) / int(df["/tmp"]["1B-blocks"]) < 0.2)
-    assert(int(df["/var/volatile"]["Used"]) / int(df["/var/volatile"]["1B-blocks"]) < 0.2)
+    assert int(df["/run"]["Used"]) / int(df["/run"]["1B-blocks"]) < 0.2
+    assert int(df["/tmp"]["Used"]) / int(df["/tmp"]["1B-blocks"]) < 0.2
+    assert int(df["/var/volatile"]["Used"]) / int(df["/var/volatile"]["1B-blocks"]) < 0.2
 
 
 def test_system0_partition_sizes(system0_shell):

@@ -2,7 +2,6 @@ import enum
 import json
 
 import attr
-
 from labgrid.driver import ExecutionError
 from labgrid.factory import target_factory
 from labgrid.step import step
@@ -24,6 +23,7 @@ from labgrid.strategy import Strategy, StrategyError
 # 1) Via bootstrap() but only once
 # 2) Via rauc_install() but only once
 
+
 class Status(enum.Enum):
     unknown = 0
     off = 1
@@ -42,6 +42,7 @@ class LXATACStrategy(Strategy):
     """
     LXATACStrategy - Strategy to bootstrap the LAG LXATAC's rootfs and switch to barebox and shell.
     """
+
     bindings = {
         "dfu_mode": "DigitalOutputProtocol",
         "httpprovider": "HTTPProviderDriver",
@@ -109,17 +110,17 @@ class LXATACStrategy(Strategy):
 
         self.target.activate(self.httpprovider)
 
-        bundle = self.target.env.config.get_image_path('rauc_bundle')
+        bundle = self.target.env.config.get_image_path("rauc_bundle")
         bundle_url = self.httpprovider.stage(bundle)
 
         self.shell.run_check(f'curl -I "{bundle_url}"')
 
-        self.shell.run_check(f'rauc-enable-cert devel.cert.pem')
+        self.shell.run_check("rauc-enable-cert devel.cert.pem")
 
         try:
             self.shell.run_check(f'rauc install "{bundle_url}"', timeout=600)
         except ExecutionError:
-            self.shell.run('journalctl --boot --unit rauc.service')
+            self.shell.run("journalctl --boot --unit rauc.service")
             raise
 
         self.target.deactivate(self.httpprovider)
@@ -129,23 +130,23 @@ class LXATACStrategy(Strategy):
     def set_bootstate(self, system0_prio, system0_attempts, system1_prio, system1_attempts):
         self.transition(Status.barebox)
 
-        self.barebox.run_check(f'state.bootstate.system0.priority={system0_prio}')
-        self.barebox.run_check(f'state.bootstate.system0.remaining_attempts={system0_attempts}')
+        self.barebox.run_check(f"state.bootstate.system0.priority={system0_prio}")
+        self.barebox.run_check(f"state.bootstate.system0.remaining_attempts={system0_attempts}")
 
-        self.barebox.run_check(f'state.bootstate.system1.priority={system1_prio}')
-        self.barebox.run_check(f'state.bootstate.system1.remaining_attempts={system1_attempts}')
+        self.barebox.run_check(f"state.bootstate.system1.priority={system1_prio}")
+        self.barebox.run_check(f"state.bootstate.system1.remaining_attempts={system1_attempts}")
 
-        self.barebox.run_check('state -s')
+        self.barebox.run_check("state -s")
 
     def get_booted_slot(self):
         self.transition(Status.network)
 
-        stdout = self.shell.run_check('rauc status --output-format=json', timeout=60)
+        stdout = self.shell.run_check("rauc status --output-format=json", timeout=60)
         rauc_status = json.loads(stdout[0])
 
-        assert 'booted' in rauc_status, 'No "booted" key in rauc status json found'
+        assert "booted" in rauc_status, 'No "booted" key in rauc status json found'
 
-        return rauc_status['booted']
+        return rauc_status["booted"]
 
     @step(args=["status"])
     def transition(self, status, *, step):
@@ -212,19 +213,19 @@ class LXATACStrategy(Strategy):
             if self.status not in [Status.system0, Status.system1]:
                 self.transition(Status.shell)
 
-            self.shell.poll_until_success('ping -c1 _gateway', timeout=60.0)
+            self.shell.poll_until_success("ping -c1 _gateway", timeout=60.0)
 
             # Also make sure we have accurate time, so that TLS works.
-            self.shell.run_check('chronyc waitsync', timeout=120.0)
+            self.shell.run_check("chronyc waitsync", timeout=120.0)
 
         elif status == Status.system0:
             self.transition(Status.network)
 
-            if self.get_booted_slot() != 'system0':
+            if self.get_booted_slot() != "system0":
                 self.set_bootstate(20, 1, 10, 1)
                 self.transition(Status.network)
 
-                assert self.get_booted_slot() == 'system0'
+                assert self.get_booted_slot() == "system0"
 
         elif status == Status.rauc_installed:
             self.transition(Status.network)
@@ -235,11 +236,11 @@ class LXATACStrategy(Strategy):
         elif status == Status.system1:
             self.transition(Status.rauc_installed)
 
-            if self.get_booted_slot() != 'system1':
+            if self.get_booted_slot() != "system1":
                 self.set_bootstate(10, 1, 20, 1)
                 self.transition(Status.network)
 
-                assert self.get_booted_slot() == 'system1'
+                assert self.get_booted_slot() == "system1"
 
         else:
             raise StrategyError(f"no transition found from {self.status} to {status}")

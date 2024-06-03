@@ -1,7 +1,7 @@
 import time
 
-import requests
 import pytest
+import requests
 
 
 def put_endpoint(fqdn, endpoint, data):
@@ -45,10 +45,10 @@ def test_tacd_http_adc(strategy, online):
         (-5.0, 5.0, "v1/output/out_0/feedback/voltage"),
         (-5.0, 5.0, "v1/output/out_1/feedback/voltage"),
         (0, 0.4, "v1/iobus/feedback/current"),
-        (0, 14, "v1/iobus/feedback/voltage")
+        (0, 14, "v1/iobus/feedback/voltage"),
     )
 
-    for (low, high, endpoint) in CHANNELS:
+    for low, high, endpoint in CHANNELS:
         res = get_json_endpoint(strategy.network.address, endpoint)
 
         # TODO: we could check res["ts"] again
@@ -70,24 +70,31 @@ def test_tacd_http_iobus_fault(strategy, online):
     get_endpoint(strategy.network.address, "v1/iobus/feedback/fault")
 
 
-@pytest.mark.parametrize("output", (
-    ("v1/dut/powered", (b'"On"', b'"Off"', b'"OffFloating"'), (
-        "v1/dut/feedback/voltage",
-        "v1/dut/feedback/current",
-    )),
-    ("v1/iobus/powered", (b"true", b"false"), (
-        "v1/iobus/feedback/voltage",
-        "v1/iobus/feedback/current",
-    )),
-    ("v1/uart/rx/enabled", (b"true", b"false"), ()),
-    ("v1/uart/tx/enabled", (b"true", b"false"), ()),
-    ("v1/output/out_0/asserted", (b"true", b"false"), (
-        "v1/output/out_0/feedback/voltage",
-    )),
-    ("v1/output/out_1/asserted", (b"true", b"false"), (
-        "v1/output/out_1/feedback/voltage",
-    ))
-))
+@pytest.mark.parametrize(
+    "output",
+    (
+        (
+            "v1/dut/powered",
+            (b'"On"', b'"Off"', b'"OffFloating"'),
+            (
+                "v1/dut/feedback/voltage",
+                "v1/dut/feedback/current",
+            ),
+        ),
+        (
+            "v1/iobus/powered",
+            (b"true", b"false"),
+            (
+                "v1/iobus/feedback/voltage",
+                "v1/iobus/feedback/current",
+            ),
+        ),
+        ("v1/uart/rx/enabled", (b"true", b"false"), ()),
+        ("v1/uart/tx/enabled", (b"true", b"false"), ()),
+        ("v1/output/out_0/asserted", (b"true", b"false"), ("v1/output/out_0/feedback/voltage",)),
+        ("v1/output/out_1/asserted", (b"true", b"false"), ("v1/output/out_1/feedback/voltage",)),
+    ),
+)
 def test_tacd_http_switch_output(strategy, online, output):
     """Test tacd output switching."""
 

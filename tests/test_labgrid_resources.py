@@ -1,9 +1,9 @@
 import time
 
 import pytest
-from labgrid.resource.remote import RemotePlaceManager
 from labgrid.remote.common import ResourceMatch
-from labgrid.util import Timeout
+from labgrid.resource.remote import RemotePlaceManager
+
 
 def test_labgrid_resources_simple(strategy, online):
     """Test non-managed resources."""
@@ -37,7 +37,7 @@ def test_labgrid_resources_simple(strategy, online):
 
                 return (serial_port.params, power_port.params, out_0.params, out_1.params)
 
-            except Exception as e:
+            except Exception:
                 pass
 
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
@@ -72,7 +72,7 @@ def test_labgrid_resources_usb(strategy, online):
                 if len(usb_resources) > 0:
                     return usb_resources
 
-            except Exception as e:
+            except Exception:
                 pass
 
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
