@@ -65,7 +65,7 @@ class LXATACStrategy(Strategy):
     @property
     def target_hostname(self):
         fqdn = self.network.address
-        hostname, _ = fqdn.split(".", maxsplit=1)
+        hostname = fqdn.split(".", maxsplit=1)[0] if "." in fqdn else fqdn
         return hostname
 
     def bootstrap(self):
