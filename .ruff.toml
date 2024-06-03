@@ -1,0 +1,2 @@
+line-length = 119
+lint.select = ['B', 'E', 'F', 'I', 'SIM', 'UP', 'W']
