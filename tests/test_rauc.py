@@ -4,7 +4,7 @@
 # TODO: we should test if this image can install a recent stable bundle and
 # if a recent stable bundle can install this bundle.
 # That would need some strategy involvement, maybe even having a new
-# "stable bundle booted" state so we do not accidentially test the stable
+# "stable bundle booted" state so we do not accidentally test the stable
 # bundle instead of the new one.
 
 

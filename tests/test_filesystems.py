@@ -4,8 +4,8 @@ GIGA = 1_000 * MEGA
 
 
 def partition_sizes(shell):
-    # These test are not RAUC tests per se but we want to run them for both
-    # slots and jamming them in between the RAUC tests using e.g. dependencies
+    # These tests are not RAUC tests per se, but we want to run them for both
+    # slots and jamming them in between the RAUC tests using e.g., dependencies
     # did not work to well / was even messier than just placing them here.
 
     # $ fdisk -l --bytes -o Device,Size /dev/mmcblk1
@@ -30,8 +30,8 @@ def partition_sizes(shell):
 
 
 def filesystem_sizes(shell):
-    # These test are not RAUC tests per se but we want to run them for both
-    # slots and jamming them in between the RAUC tests using e.g. dependencies
+    # These tests are not RAUC tests per se, but we want to run them for both
+    # slots and jamming them in between the RAUC tests using e.g., dependencies
     # did not work to well / was even messier than just placing them here.
 
     # $ df -B1
