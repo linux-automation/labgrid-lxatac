@@ -59,11 +59,11 @@ def test_tacd_http_adc(strategy, online):
 
 def test_tacd_http_locator(strategy, online):
     """Test tacd locator endpoint."""
-    ENDPOINT = "v1/tac/display/locator"
+    endpoint = "v1/tac/display/locator"
 
     for state in [b"true", b"false"]:
-        put_endpoint(strategy.network.address, ENDPOINT, state)
-        res = get_endpoint(strategy.network.address, ENDPOINT)
+        put_endpoint(strategy.network.address, endpoint, state)
+        res = get_endpoint(strategy.network.address, endpoint)
         assert res.content == state
 
 
