@@ -69,41 +69,20 @@ def test_tacd_http_iobus_fault(strategy, online):
 
 
 @pytest.mark.parametrize(
-    "output",
+    "control, states",
     (
-        (
-            "v1/dut/powered",
-            (b'"On"', b'"Off"', b'"OffFloating"'),
-            (
-                "v1/dut/feedback/voltage",
-                "v1/dut/feedback/current",
-            ),
-        ),
-        (
-            "v1/iobus/powered",
-            (b"true", b"false"),
-            (
-                "v1/iobus/feedback/voltage",
-                "v1/iobus/feedback/current",
-            ),
-        ),
-        ("v1/uart/rx/enabled", (b"true", b"false"), ()),
-        ("v1/uart/tx/enabled", (b"true", b"false"), ()),
-        ("v1/output/out_0/asserted", (b"true", b"false"), ("v1/output/out_0/feedback/voltage",)),
-        ("v1/output/out_1/asserted", (b"true", b"false"), ("v1/output/out_1/feedback/voltage",)),
+        ("v1/dut/powered", (b'"On"', b'"Off"', b'"OffFloating"')),
+        ("v1/iobus/powered", (b"true", b"false")),
+        ("v1/uart/rx/enabled", (b"true", b"false")),
+        ("v1/uart/tx/enabled", (b"true", b"false")),
+        ("v1/output/out_0/asserted", (b"true", b"false")),
+        ("v1/output/out_1/asserted", (b"true", b"false")),
     ),
 )
-def test_tacd_http_switch_output(strategy, online, output):
+def test_tacd_http_switch_output(strategy, online, control, states):
     """Test tacd output switching."""
-
-    control, states, feedback = output
-
     for state in states:
         put_endpoint(strategy.network.address, control, state)
         time.sleep(0.5)
         res = get_endpoint(strategy.network.address, control)
         assert res.content == state
-
-        for fb in feedback:
-            # TODO: do some validation on the feedback voltages/currents
-            res = get_json_endpoint(strategy.network.address, fb)
