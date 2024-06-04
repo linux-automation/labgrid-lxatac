@@ -1,3 +1,5 @@
+import pytest
+
 KILO = 1_000
 MEGA = 1_000 * KILO
 GIGA = 1_000 * MEGA
@@ -60,17 +62,21 @@ def filesystem_sizes(shell):
     assert int(df["/var/volatile"]["Used"]) / int(df["/var/volatile"]["1B-blocks"]) < 0.2
 
 
+@pytest.mark.slow
 def test_system0_partition_sizes(system0_shell):
     partition_sizes(system0_shell)
 
 
+@pytest.mark.slow
 def test_system0_filesystem_sizes(system0_shell):
     filesystem_sizes(system0_shell)
 
 
+@pytest.mark.slow
 def test_system1_partition_sizes(system1_shell):
     partition_sizes(system1_shell)
 
 
+@pytest.mark.slow
 def test_system1_filesystem_sizes(system1_shell):
     filesystem_sizes(system1_shell)

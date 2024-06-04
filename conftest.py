@@ -54,3 +54,7 @@ def system1_shell(strategy, target):
         pytest.exit(f"Transition into system1 shell failed: {e}", returncode=3)
 
     return target.get_driver("ShellDriver")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: These tests run especially slow.")

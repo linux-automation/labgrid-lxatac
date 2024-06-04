@@ -1,3 +1,5 @@
+import pytest
+
 """Basic rauc tests"""
 
 
@@ -29,6 +31,7 @@ def test_rauc_version(shell):
 #    assert any('rootfs' in image for image in result['images'])
 
 
+@pytest.mark.slow
 def test_system0_rauc_status(system0_shell):
     """
     Test basic slot status readout for system0.
@@ -36,6 +39,7 @@ def test_system0_rauc_status(system0_shell):
     system0_shell.run_check("rauc status", timeout=60)
 
 
+@pytest.mark.slow
 def test_bootchooser_boot_system0_and_mark_bad(system0_shell, strategy):
     """
     Test if booting by priority works, mark system bad and test fallback.
@@ -64,6 +68,7 @@ def test_bootchooser_boot_system0_and_mark_bad(system0_shell, strategy):
     system0_shell.run_check("rauc status mark-active other")
 
 
+@pytest.mark.slow
 def test_system1_rauc_status(system1_shell):
     """
     Test basic slot status readout for system1.
@@ -71,6 +76,7 @@ def test_system1_rauc_status(system1_shell):
     system1_shell.run_check("rauc status", timeout=60)
 
 
+@pytest.mark.slow
 def test_bootchooser_boot_system1_and_mark_bad(system1_shell, strategy):
     """
     Test if booting by priority works, mark system bad and test fallback.

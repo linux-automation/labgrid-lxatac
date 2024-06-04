@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from labgrid.driver import ExecutionError
 
 
@@ -13,10 +14,12 @@ def system_running(shell):
         raise
 
 
+@pytest.mark.slow
 def test_system_running_0(system0_shell):
     system_running(system0_shell)
 
 
+@pytest.mark.slow
 def test_system_running_1(system1_shell):
     system_running(system1_shell)
 
