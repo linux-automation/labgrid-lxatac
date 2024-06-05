@@ -53,6 +53,7 @@ class LXATACStrategy(Strategy):
         "barebox": "BareboxDriver",
         "shell": "ShellDriver",
         "network": "NetworkService",
+        "eet": {"LxatacEETDriver", None},
     }
 
     status = attr.ib(default=Status.unknown)
@@ -178,6 +179,8 @@ class LXATACStrategy(Strategy):
             self.dfu_mode.set(False)
 
             self.target.activate(self.console)
+            if self.eet:
+                self.target.activate(self.eet)
 
         elif status == Status.bootstrap:
             self.transition(Status.off)

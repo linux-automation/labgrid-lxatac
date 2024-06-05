@@ -1,0 +1,48 @@
+targets:
+  main:
+    resources:
+      RemotePlace:
+        name: lxatac-00034
+      NetworkService:
+        address: lxatac-00034
+        username: root
+      RemoteHTTPProvider:
+        host: acme
+        internal: /var/www/lab
+        external: http://acme/lab/
+      RemoteLxatacEETResource:
+        host: lxatac-00013
+        usbpath: 1-1.2:1.0
+    drivers:
+      LxatacEETDriver: {}
+      HttpDigitalOutputDriver: {}
+      HTTPProviderDriver: {}
+      NetworkPowerDriver:
+        delay: 5.0
+      SerialDriver:
+        txdelay: 0.02
+      DFUDriver: {}
+      BareboxDriver:
+        prompt: 'barebox@[^:]+:[^ ]+ '
+        interrupt: "\x03\r\n"
+      AndroidFastbootDriver: {}
+      ShellDriver:
+        prompt: 'root@[^:]+:[^ ]+'
+        login_prompt: ' login: '
+        username: root
+      LXATACStrategy: {}
+    options:
+      ptx-works-available: []
+    features:
+      - eet
+
+images:
+  tfa: images/tf-a-stm32mp157c-lxa-tac.stm32
+  mmc_boot_fip: images/emmc-boot-image-lxatac.fip
+  mmc_boot: images/emmc-boot-image-lxatac.img
+  mmc: images/emmc-image-lxatac.simg
+  rauc_bundle: images/lxatac-core-bundle-base-lxatac.raucb
+
+imports:
+- lxatacstrategy.py
+- lxatac-eet.py
