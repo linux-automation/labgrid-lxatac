@@ -77,6 +77,8 @@ def test_labgrid_resources_usb(strategy, online):
 
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
 
+    if strategy.eet:
+        strategy.eet.link("USB1_IN -> USB1_OUT, USB2_IN -> USB2_OUT, USB3_IN -> USB3_OUT")
     usb_resources = retry_loop()
 
     # make sure at least one USB resource is available
