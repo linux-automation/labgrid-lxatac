@@ -32,29 +32,25 @@ def test_tacd_http_temperature(strategy, online):
     assert 0 < res["value"] < 70
 
 
-def test_tacd_http_adc(strategy, online):
+@pytest.mark.parametrize(
+    "low, high, endpoint",
+    (
+        (-0.01, 5.0, "v1/dut/feedback/current"),
+        (-5.0, 50.0, "v1/dut/feedback/voltage"),
+        (-0.01, 0.7, "v1/usb/host/total/feedback/current"),
+        (-0.001, 0.5, "v1/usb/host/port1/feedback/current"),
+        (-0.01, 0.5, "v1/usb/host/port2/feedback/current"),
+        (-0.001, 0.5, "v1/usb/host/port3/feedback/current"),
+        (-5.0, 5.0, "v1/output/out_0/feedback/voltage"),
+        (-5.0, 5.0, "v1/output/out_1/feedback/voltage"),
+        (-0.01, 0.4, "v1/iobus/feedback/current"),
+        (-0.01, 14, "v1/iobus/feedback/voltage"),
+    ),
+)
+def test_tacd_http_adc(strategy, low, high, endpoint):
     """Test tacd ADC endpoints."""
-
-    CHANNELS = (
-        (
-            (-0.01, 5.0, "v1/dut/feedback/current"),
-            (-5.0, 50.0, "v1/dut/feedback/voltage"),
-            (-0.01, 0.7, "v1/usb/host/total/feedback/current"),
-            (-0.001, 0.5, "v1/usb/host/port1/feedback/current"),
-            (-0.01, 0.5, "v1/usb/host/port2/feedback/current"),
-            (-0.001, 0.5, "v1/usb/host/port3/feedback/current"),
-            (-5.0, 5.0, "v1/output/out_0/feedback/voltage"),
-            (-5.0, 5.0, "v1/output/out_1/feedback/voltage"),
-            (-0.01, 0.4, "v1/iobus/feedback/current"),
-            (-0.01, 14, "v1/iobus/feedback/voltage"),
-        ),
-    )
-
-    for low, high, endpoint in CHANNELS:
-        res = get_json_endpoint(strategy.network.address, endpoint)
-
-        # TODO: we could check res["ts"] again
-        assert low <= res["value"] <= high
+    res = get_json_endpoint(strategy.network.address, endpoint)
+    assert low <= res["value"] <= high
 
 
 def test_tacd_http_locator(strategy, online):
