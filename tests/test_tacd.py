@@ -271,4 +271,32 @@ def test_tacd_dut_power_switchable(strategy, online):
     assert -0.5 < res["value"] < 0.5
 
 
+@pytest.mark.lg_feature("eet")
+def test_tacd_iobus_power_switchable(strategy, online):
+    """
+    Test if the tacd can switch the IOBus power and if measurements are correct.
+    """
+    strategy.eet.link("IOBUS_VCC -> BUS1 -> CURR -> SHUNT_68R")  # Load IOBUs VCC with 68R
+    put_endpoint(strategy.network.address, "v1/iobus/powered", b"true")  # activate IOBus power supply
+    time.sleep(0.5)  # Give measurements a moment to settle
+
+    res = get_json_endpoint(strategy.network.address, "v1/iobus/feedback/current")  # measure IOBus current
+    assert 0.15 < res["value"] < 0.18
+
+    res = get_json_endpoint(strategy.network.address, "v1/iobus/feedback/voltage")  # measure IOBus voltage
+    assert 10 < res["value"] < 13
+
+    put_endpoint(strategy.network.address, "v1/iobus/powered", b"false")  # deactivate IOBus power
+    time.sleep(0.5)  # Give measurements a moment to settle
+
+    res = get_json_endpoint(
+        strategy.network.address, "v1/iobus/feedback/current"
+    )  # IOBus current should be zero immediately
+    assert -0.05 < res["value"] < 0.05
+
+    time.sleep(2)
+    res = get_json_endpoint(strategy.network.address, "v1/iobus/feedback/voltage")
+    assert -0.5 < res["value"] < 0.5
+
+
 # TODO: Add a test that checks if "OffFloating" works with the power switch
