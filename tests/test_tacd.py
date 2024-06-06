@@ -239,3 +239,36 @@ def test_tacd_uart_3v3(strategy, online):
     time.sleep(0.5)
     res = get_json_endpoint(strategy.network.address, "v1/dut/feedback/voltage")
     assert 3.0 < res["value"] < 3.6
+
+
+@pytest.mark.lg_feature("eet")
+def test_tacd_dut_power_switchable(strategy, online):
+    """
+    Test if the tacd can switch the DUT power and if measurements are correct.
+    """
+    strategy.eet.link(
+        "AUX3 -> BUS1 -> PWR_IN, PWR_OUT -> BUS2 -> CURR -> SHUNT_15R"
+    )  # Connect PWRin to 12V. Load PWRout with 15R
+    put_endpoint(strategy.network.address, "v1/dut/powered", b'"On"')  # activate DUT power switch
+    time.sleep(0.1)  # Give measurements a moment to settle
+
+    res = get_json_endpoint(strategy.network.address, "v1/dut/feedback/current")  # measure DUT current
+    assert 0.70 < res["value"] < 0.85
+
+    res = get_json_endpoint(strategy.network.address, "v1/dut/feedback/voltage")  # measure DUT voltage
+    assert 11 < res["value"] < 13
+
+    put_endpoint(strategy.network.address, "v1/dut/powered", b'"Off"')  # deactivate DUT power switch
+    time.sleep(0.2)  # Give measurements a moment to settle
+
+    res = get_json_endpoint(
+        strategy.network.address, "v1/dut/feedback/current"
+    )  # DUT current should be zero immediately
+    assert -0.05 < res["value"] < 0.05
+
+    time.sleep(0.2)  # DUT voltage may take a few moments to get close to zero
+    res = get_json_endpoint(strategy.network.address, "v1/dut/feedback/voltage")
+    assert -0.5 < res["value"] < 0.5
+
+
+# TODO: Add a test that checks if "OffFloating" works with the power switch
