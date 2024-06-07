@@ -53,14 +53,17 @@ def test_tacd_http_adc(strategy, low, high, endpoint):
     assert low <= res["value"] <= high
 
 
-def test_tacd_http_locator(strategy, online):
+@pytest.mark.parametrize(
+    "state",
+    (b"true", b"false"),
+)
+def test_tacd_http_locator(strategy, online, state):
     """Test tacd locator endpoint."""
     endpoint = "v1/tac/display/locator"
 
-    for state in [b"true", b"false"]:
-        put_endpoint(strategy.network.address, endpoint, state)
-        res = get_endpoint(strategy.network.address, endpoint)
-        assert res.content == state
+    put_endpoint(strategy.network.address, endpoint, state)
+    res = get_endpoint(strategy.network.address, endpoint)
+    assert res.content == state
 
 
 def test_tacd_http_iobus_fault(strategy, online):
