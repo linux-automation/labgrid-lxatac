@@ -40,6 +40,8 @@ targets:
         - /ptx/work/WORK_XUNGI
         - /ptx/work/WORK_JALLU
         - /ptx/work/WORK_MOHCH
+    features:
+      - ptx-flavor
 
 images:
   tfa: ../images/lxatac/tf-a-stm32mp157c-lxa-tac.stm32

@@ -24,6 +24,7 @@ def test_system_running_1(system1_shell):
     system_running(system1_shell)
 
 
+@pytest.mark.lg_feature("ptx-flavor")
 def test_nfs_mounts(env, target, shell):
     """Test that the NFS mounts listed in the environment config are available."""
     ptx_works = env.config.get_target_option(target.name, "ptx-works-available")
