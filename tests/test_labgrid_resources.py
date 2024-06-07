@@ -4,6 +4,10 @@ import pytest
 from labgrid.remote.common import ResourceMatch
 from labgrid.resource.remote import RemotePlaceManager
 
+# TODO: These tests make use of the RemotePlaceManager(), that is not meant to be used for cases like these.
+# It would probably be better to create a new labgrid remote place with a labgrid `target` and the expected
+# resources on the fly.
+
 
 def test_labgrid_resources_simple(strategy, online):
     """Test non-managed resources."""
