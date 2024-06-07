@@ -68,7 +68,9 @@ def test_tacd_http_locator(strategy, online, state):
 
 def test_tacd_http_iobus_fault(strategy, online):
     """Test tacd iobus fault endpoint."""
-    get_endpoint(strategy.network.address, "v1/iobus/feedback/fault")
+    res = get_endpoint(strategy.network.address, "v1/iobus/feedback/fault")
+    assert res.status_code == 200
+    assert res.text in ("true", "false")
 
 
 @pytest.mark.parametrize(
