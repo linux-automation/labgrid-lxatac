@@ -1,3 +1,6 @@
+import json
+
+
 def test_linux_i2c_bus(shell):
     """Test if the i2c subsystem exists"""
     shell.run_check("test -d /sys/bus/i2c")
@@ -20,3 +23,11 @@ def test_linux_nvmem_bus(shell):
     shell.run_check("test -d /sys/bus/nvmem")
     shell.run_check("test -d /sys/bus/nvmem/devices/0-00501")
     shell.run_check("test -d /sys/bus/nvmem/devices/2-00502")
+
+
+def test_sensors(shell):
+    stdout = shell.run_check("sensors -j")
+    data = json.loads("".join(stdout))
+
+    assert "cpu_thermal-virtual-0" in data
+    assert 10 <= data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] <= 70
