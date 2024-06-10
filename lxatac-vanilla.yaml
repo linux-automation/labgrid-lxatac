@@ -39,3 +39,4 @@ images:
 
 imports:
 - lxatacstrategy.py
+- lxatac-eet.py
