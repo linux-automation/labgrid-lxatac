@@ -2,9 +2,9 @@ targets:
   main:
     resources:
       RemotePlace:
-        name: lxatac10
+        name: lxatac-00034
       NetworkService:
-        address: lxatac-00010.lab2.stw.pengutronix.de
+        address: lxatac-00034.lab2.stw.pengutronix.de
         username: root
       RemoteHTTPProvider:
         host: www.lab.stw.pengutronix.de
