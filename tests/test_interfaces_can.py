@@ -39,7 +39,7 @@ def can_configured(shell):
     shell.run_check("systemctl stop lxa-iobus")
     shell.run_check("ip l set can0_iobus down")
     shell.run_check("ip l set can1 down")
-    shell.run_check("ip link set can1 type can bitrate 100000")
+    shell.run_check("ip link set can1 type can tq 400 prop-seg 9 phase-seg1 9 phase-seg2 6 sjw 5")
     shell.run_check("ip l set can0_iobus up")
     shell.run_check("ip l set can1 up")
     yield
