@@ -33,6 +33,7 @@ targets:
           dfu_mode: "dfu_mode"
     options:
       ptx-works-available: []
+      usbpath: 1-1.1:1.0  # Connect a USB mass storage to USB port 1
 
 images:
   tfa: ../images/lxatac/tf-a-stm32mp157c-lxa-tac.stm32
