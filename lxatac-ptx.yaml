@@ -11,7 +11,12 @@ targets:
         internal: /var/www/jenkins/
         external: https://www.lab.stw.pengutronix.de/jenkins/
     drivers:
-    - LXAIOBusPIODriver: {}
+    - LXAIOBusPIODriver:
+        name: "dfu_mode"
+        bindings: { pio: "dfu_mode"}
+    - LXAIOBusPIODriver:
+        name: "ethmux"
+        bindings: { pio: "ethmux"}
     - HTTPProviderDriver: {}
     - NetworkPowerDriver:
         delay: 5.0
@@ -26,7 +31,10 @@ targets:
         prompt: 'root@[^:]+:[^ ]+'
         login_prompt: ' login: '
         username: root
-    - LXATACStrategy: {}
+    - LXATACStrategy:
+        bindings:
+          dfu_mode: "dfu_mode"
+          ethmux: "ethmux"
     options:
       ptx-works-available:
         - /ptx/work/WORK_EFOHW
@@ -42,6 +50,7 @@ targets:
         - /ptx/work/WORK_MOHCH
     features:
       - ptx-flavor
+      - ethmux
 
 images:
   tfa: ../images/lxatac/tf-a-stm32mp157c-lxa-tac.stm32

@@ -54,6 +54,7 @@ class LXATACStrategy(Strategy):
         "shell": "ShellDriver",
         "network": "NetworkService",
         "eet": {"LxatacEETDriver", None},
+        "ethmux": {"LXAIOBusPIODriver", None},
     }
 
     status = attr.ib(default=Status.unknown)
@@ -179,8 +180,13 @@ class LXATACStrategy(Strategy):
             self.dfu_mode.set(False)
 
             self.target.activate(self.console)
+
+            # Optional resources
             if self.eet:
                 self.target.activate(self.eet)
+            if self.ethmux:
+                self.target.activate(self.ethmux)
+                self.ethmux.set(True)  # Connect upstream Ethernet to Lab network as default
 
         elif status == Status.bootstrap:
             self.transition(Status.off)
