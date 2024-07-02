@@ -1,3 +1,6 @@
+import json
+from time import sleep
+
 import pytest
 
 
@@ -61,3 +64,38 @@ def test_network_tftp(prepare_network, shell):
     # Clean up
     stdout, stderr, returncode = shell.run("rm /srv/tftp/test_file ./test_file")
     assert returncode == 0
+
+
+@pytest.mark.slow
+@pytest.mark.lg_feature("ethmux")
+@pytest.mark.parametrize(
+    "bandwidth, expected",
+    ((10, pytest.approx(9, rel=0.1)), (100, pytest.approx(90, rel=0.1)), (1000, pytest.approx(350, rel=0.1))),
+)
+def test_network_performance(prepare_network, shell, bandwidth, expected):
+    """Test network performance via iperf3"""
+
+    # Set bandwidth on both interfaces
+    shell.run(f"ethtool -s uplink speed {bandwidth}")
+    shell.run(f"ip netns exec dut-namespace ethtool -s dut speed {bandwidth}")
+
+    # Await setup time
+    sleep(5)
+
+    # Start iperf server in network namespace
+    port = 5151
+    shell.run(f"ip netns exec dut-namespace iperf3 -s -1 -p {port} 2>&1 >/dev/null &")
+
+    # Run iperf client client in default network namespace
+    stdout, stderr, returncode = shell.run(f"iperf3 -J -c 10.11.12.1 -p {port}")
+    assert returncode == 0
+    assert len(stdout) > 0
+
+    results = json.loads("".join(stdout), strict=False)
+
+    mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
+    assert mbps_received == expected
+
+    # Reset bandwidth configuration
+    shell.run("ethtool -s uplink speed 1000")
+    shell.run("ip netns exec dut-namespace ethtool -s dut speed 1000")
