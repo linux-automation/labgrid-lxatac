@@ -96,3 +96,15 @@ def test_switch_configuration(shell):
 
     assert link_local_v6.endswith(v6_tail)
     assert global_v6.endswith(v6_tail)
+
+
+def test_hostname(shell):
+    """Test whether the serial number is contained in the hostname"""
+
+    serial_number = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
+    serial_number = serial_number[0].split("\x00")[0]  # Remove trailing \0
+    serial_number = serial_number.split(".")[-1]  # Only the last part is used in the hostname
+
+    hostname = shell.run_check("hostname")[0]
+
+    assert serial_number in hostname
