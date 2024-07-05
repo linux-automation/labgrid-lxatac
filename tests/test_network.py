@@ -1,7 +1,9 @@
+import hashlib
 import json
 from time import sleep
 
 import pytest
+import requests
 
 
 @pytest.fixture(scope="function")
@@ -125,6 +127,7 @@ def test_network_interfaces(shell):
 
     assert expected_interfaces == found_interfaces
 
+
 @pytest.mark.lg_feature("ptx-flavor")
 def test_network_nfs_io(shell):
     """Test nfs share io"""
@@ -150,3 +153,27 @@ def test_network_nfs_io(shell):
         assert len(file) > 0
 
         shell.run_check(f"rm {file[0]}")
+
+
+def test_network_http_io(strategy, shell):
+    """Test http server file io"""
+
+    # Create test file
+    shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
+    output, _, returncode = shell.run("md5sum /srv/www/test_file")
+    assert returncode == 0
+    assert len(output) > 0
+
+    # Cut out hash from output
+    checksum1 = output[0].split(" ")[0]
+
+    # Download test file
+    r = requests.get(f"http://{strategy.network.address}/srv/test_file")
+    assert r.status_code == 200
+
+    checksum2 = hashlib.md5(r.content).hexdigest()
+
+    assert checksum1 == checksum2, f"checksums are different: {checksum1} != {checksum2}"
+
+    # Delete test file
+    shell.run_check("rm /srv/www/test_file")
