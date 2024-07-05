@@ -124,3 +124,29 @@ def test_network_interfaces(shell):
         found_interfaces.add(line.split(":")[1].strip())
 
     assert expected_interfaces == found_interfaces
+
+@pytest.mark.lg_feature("ptx-flavor")
+def test_network_nfs_io(shell):
+    """Test nfs share io"""
+    ptx_works = shell.target.env.config.get_target_option(shell.target.name, "ptx-works-available")
+    assert len(ptx_works) > 0
+
+    mount = shell.run_check("mount")
+    mount = "\n".join(mount)
+
+    # Iterate over all available shares and check whether io operation is possible
+    for ptx_work in ptx_works:
+        assert ptx_work in mount
+
+        dir_contents = shell.run_check(f"ls -1 {ptx_work}")
+        # make sure the directories contain something
+        assert len(dir_contents) > 0
+
+        shell.run_check(f"cd {ptx_work}")
+
+        # Create a file on the share
+        file, _, returncode = shell.run("mktemp -p .")
+        assert returncode == 0
+        assert len(file) > 0
+
+        shell.run_check(f"rm {file[0]}")
