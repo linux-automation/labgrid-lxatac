@@ -1,0 +1,1 @@
+KERNEL=="i2c-[0-9]*", ATTRS{manufacturer}=="www.fischl.de", GROUP="plugdev", MODE="0660"

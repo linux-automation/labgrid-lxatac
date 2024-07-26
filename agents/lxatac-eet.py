@@ -22,7 +22,7 @@ class SMBus:
 
     def write_byte_data(self, addr, reg, val):
         """Writes a register on an I2C device on this bus."""
-        subprocess.check_call(["i2cset", "-y", str(self._bus), str(addr), str(reg), str(val), "b"])
+        subprocess.check_call(["/usr/sbin/i2cset", "-y", str(self._bus), str(addr), str(reg), str(val), "b"])
 
 
 def byte_n(val, n):
