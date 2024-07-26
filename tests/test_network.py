@@ -1,7 +1,3 @@
-from http import client
-from time import sleep
-import subprocess
-import json
 import pytest
 
 
@@ -32,8 +28,6 @@ def prepare_network(strategy, shell):
 @pytest.mark.lg_feature("ethmux")
 def test_network_tftp(prepare_network, shell):
     """Test tftp functionality"""
-
-    fqdn = shell.target.get_resource("NetworkService").address
 
     # Create test file in tftp directory and grant access to it
     stdout, stderr, returncode = shell.run("touch /srv/tftp/test_file && chmod o+w /srv/tftp/test_file")
