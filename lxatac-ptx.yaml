@@ -10,7 +10,11 @@ targets:
         host: www.lab.stw.pengutronix.de
         internal: /var/www/jenkins/
         external: https://www.lab.stw.pengutronix.de/jenkins/
+    - RemoteLxatacEETResource:
+        host: rlabc-srv
+        usbpath: 2-2.1.1:1.0
     drivers:
+    - LxatacEETDriver: {}
     - LXAIOBusPIODriver:
         name: "dfu_mode"
         bindings: { pio: "dfu_mode"}
@@ -51,6 +55,7 @@ targets:
     features:
       - ptx-flavor
       - ethmux
+      - eet
 
 images:
   tfa: ../images/lxatac/tf-a-stm32mp157c-lxa-tac.stm32
