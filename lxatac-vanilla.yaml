@@ -14,9 +14,6 @@ targets:
     - LXAIOBusPIODriver:
         name: "dfu_mode"
         bindings: { pio: "dfu_mode"}
-      LXAIOBusPIODriver:
-        name: "ethmux"
-        bindings: { pio: "ethmux"}
     - HTTPProviderDriver: {}
     - NetworkPowerDriver:
         delay: 5.0
