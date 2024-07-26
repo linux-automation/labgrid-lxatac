@@ -1,36 +1,36 @@
 targets:
   main:
     resources:
-      RemotePlace:
+    - RemotePlace:
         name: lxatac-00034
-      NetworkService:
+    - NetworkService:
         address: lxatac-00034
         username: root
-      RemoteHTTPProvider:
+    - RemoteHTTPProvider:
         host: www.lab.stw.pengutronix.de
         internal: /var/www/jenkins/
         external: https://www.lab.stw.pengutronix.de/jenkins/
-      RemoteLxatacEETResource:
+    - RemoteLxatacEETResource:
         host: rlabc-srv
         usbpath: 2-2.1.1:1.0
     drivers:
-      LxatacEETDriver: {}
-      LXAIOBusPIODriver: {}
-      HTTPProviderDriver: {}
-      NetworkPowerDriver:
+    - LxatacEETDriver: {}
+    - LXAIOBusPIODriver: {}
+    - HTTPProviderDriver: {}
+    - NetworkPowerDriver:
         delay: 5.0
-      SerialDriver:
+    - SerialDriver:
         txdelay: 0.02
-      DFUDriver: {}
-      BareboxDriver:
+    - DFUDriver: {}
+    - BareboxDriver:
         prompt: 'barebox@[^:]+:[^ ]+ '
         interrupt: "\x03\r\n"
-      AndroidFastbootDriver: {}
-      ShellDriver:
+    - AndroidFastbootDriver: {}
+    - ShellDriver:
         prompt: 'root@[^:]+:[^ ]+'
         login_prompt: ' login: '
         username: root
-      LXATACStrategy: {}
+    - LXATACStrategy: {}
     options:
       ptx-works-available: []
     features:
