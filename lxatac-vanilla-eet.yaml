@@ -4,7 +4,7 @@ targets:
     - RemotePlace:
         name: lxatac-00034
     - NetworkService:
-        address: lxatac-00034
+        address: lxatac-00034.lab2.stw.pengutronix.de
         username: root
     - RemoteHTTPProvider:
         host: www.lab.stw.pengutronix.de
