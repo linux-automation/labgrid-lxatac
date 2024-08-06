@@ -181,12 +181,7 @@ class LXATACStrategy(Strategy):
 
             self.target.activate(self.console)
 
-            # Optional resources
-            if self.eet:
-                self.target.activate(self.eet)
-            if self.ethmux:
-                self.target.activate(self.ethmux)
-                self.ethmux.set(True)  # Connect upstream Ethernet to Lab network as default
+            self.activate_optionals()
 
         elif status == Status.bootstrap:
             self.transition(Status.off)
@@ -263,6 +258,7 @@ class LXATACStrategy(Strategy):
 
         self.target.activate(self.power)
         self.target.activate(self.console)
+        self.activate_optionals()
 
         if status == Status.barebox:
             self.target.activate(self.barebox)
@@ -275,3 +271,10 @@ class LXATACStrategy(Strategy):
 
         self.mmc_bootstrapped = True
         self.status = status
+
+    def activate_optionals(self):
+        if self.eet:
+            self.target.activate(self.eet)
+        if self.ethmux:
+            self.target.activate(self.ethmux)
+            self.ethmux.set(True)  # Connect upstream Ethernet to Lab network as default
