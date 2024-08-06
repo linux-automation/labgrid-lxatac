@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from labgrid.driver import ExecutionError
 
 
 def test_can_interface_can0(shell):
@@ -63,16 +62,6 @@ def test_can_traffic(shell, can_configured):
     """
 
     dump_file = "/tmp/can-test"
-
-    try:
-        shell.run_check("ip link show can0_iobus")
-    except ExecutionError:
-        pytest.skip("'can0_iobus' interface not available")
-
-    try:
-        shell.run_check("ip link show can1")
-    except ExecutionError:
-        pytest.skip("'can1' interface not available")
 
     shell.run_check(f"candump -n1 can1 > {dump_file} &")
     shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
