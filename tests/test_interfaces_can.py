@@ -47,6 +47,12 @@ def can_configured(shell):
     shell.run_check("systemctl start lxa-iobus")
 
 
+def test_can_tools(shell):
+    """Make sure canutils are present."""
+    shell.run_check("which candump")
+    shell.run_check("which cansend")
+
+
 @pytest.mark.lg_feature("eet")
 def test_can_traffic(shell, can_configured):
     """
@@ -57,12 +63,6 @@ def test_can_traffic(shell, can_configured):
     """
 
     dump_file = "/tmp/can-test"
-
-    try:
-        shell.run_check("which candump")
-        shell.run_check("which cansend")
-    except ExecutionError:
-        pytest.skip("candump and/or cansend commands not available")
 
     try:
         shell.run_check("ip link show can0_iobus")
