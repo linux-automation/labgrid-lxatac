@@ -21,8 +21,8 @@ def test_linux_mmc_bus(shell):
 def test_linux_nvmem_bus(shell):
     """Test if the nvmem subsystem exists"""
     shell.run_check("test -d /sys/bus/nvmem")
-    shell.run_check("test -d /sys/bus/nvmem/devices/0-00501")
-    shell.run_check("test -d /sys/bus/nvmem/devices/2-00502")
+    shell.run_check("test -d /sys/bus/nvmem/devices/?-00502")
+    shell.run_check("test -d /sys/bus/nvmem/devices/?-00501")
 
 
 def test_sensors(shell):
