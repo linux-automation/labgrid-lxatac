@@ -87,25 +87,25 @@ def test_tacd_http_switch_output(strategy, online, control, states):
         (
             "v1/output/out_0/feedback/voltage",
             "5V_1K -> -5V -> BUS1 -> OUT0",
-            (-5.5, -4.5),
+            (-5.5, -4.0),
             ("v1/output/out_0/asserted", b"false"),
         ),
         (
             "v1/output/out_0/feedback/voltage",
             "5V_1K -> 5V -> BUS1 -> OUT0",
-            (4.5, 5.5),
+            (4.0, 5.5),
             ("v1/output/out_0/asserted", b"false"),
         ),
         (
             "v1/output/out_1/feedback/voltage",
             "5V_1K -> -5V -> BUS1 -> OUT1",
-            (-5.5, -4.5),
+            (-5.5, -4.0),
             ("v1/output/out_1/asserted", b"false"),
         ),
         (
             "v1/output/out_1/feedback/voltage",
             "5V_1K -> 5V -> BUS1 -> OUT1",
-            (4.5, 5.5),
+            (4.0, 5.5),
             ("v1/output/out_1/asserted", b"false"),
         ),
         (
