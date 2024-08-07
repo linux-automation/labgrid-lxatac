@@ -17,7 +17,7 @@ What's in this Repository
 - `lxatac-vanilla.yaml`: Minimal labgrid environment to run most of the tests in this repository.
    This environment can be used as a starting point to run these tests yourself.
 - `lxatac-vanilla-eet.yaml`: Extended labgrid environment that additionally uses an
-   [Ethmux](https://www.linux-automation.com/de/products/ethernet-mux.html) and a custom test device to test even
+   [Ethmux](https://www.linux-automation.com/en/products/ethernet-mux.html) and a custom test device to test even
    more features of the LXA TAC.
 - `lxatac-ptx.yaml`: labgrid environment used to test the Pengutronix-internal flavor of `meta-lxatac`.
 - `lxatac-eet.py` and `agents/lxatac-eet.py`: labgrid driver and agent for the custom test device.
@@ -39,14 +39,14 @@ The minimum resources needed to control an LXA TAC DUT are:
 - **Power Switch**: Used to switch the 12 V to the DUT on/off.
   Used to control the power state of the DUT.
 - **Serial Port**: Connected to the *debug serial* power on the DUT.
-  Used to have a shell in BOotloader and Linux.
+  Used to have a shell in Bootloader and Linux.
 - **DFUDevice** and **AndroidFastboot**: Connected to the USB-C (device) port of the DUT.
   Used to load the initial bootloader to RAM and to download the initial contents of the eMMC.
-- **Digial Output** (PIO): Connected to the `boot1`-signal on the baseboard.
+- **Digital Output** (PIO): Connected to the `boot1`-signal on the baseboard.
   Used to force the DUT into serial download mode on power on.
   (See [meta-lxatac README](https://github.com/linux-automation/meta-lxatac/?tab=readme-ov-file#bring-the-device-into-usb-boot-mode)
   for details.)
-- **HTTPProvider**: A HTTP-Server that can be used by labgrid to serve images to the DUT.
+- **HTTPProvider**: An HTTP-Server that can be used by labgrid to serve images to the DUT.
   Used to test streaming updates using RAUC.
 
 The labgrid environments provided here are the ones used during development and thus contain settings specific to our
