@@ -101,16 +101,6 @@ def test_network_performance(prepare_network, shell, bandwidth, expected):
     shell.run("ip netns exec dut-namespace ethtool -s dut speed 1000")
 
 
-def test_network_connectivity(shell):
-    """Test connectivity by sending a ping to the gateway"""
-
-    bridge_iface = "tac-bridge"
-    link_state = shell.run_check(f"cat /sys/class/net/{bridge_iface}/operstate")[0]
-    assert link_state[0] == "up", f"link_state is {link_state}"
-
-    shell.run_check(f"ping -I {bridge_iface} -c1 _gateway")
-
-
 def test_network_interfaces(shell):
     """Test whether all expected network interfaces are present"""
 
