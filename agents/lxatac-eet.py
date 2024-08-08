@@ -92,7 +92,7 @@ class RelaisMatrix:
 
     NON_LEAVES = {"BUS1", "BUS2", "CURR", "5V", "-5V"}
 
-    # Make sure busses are not driven from two sources at the same time.
+    # Make sure buses are not driven from two sources at the same time.
     MUTUALLY_EXCLUSIVE = (
         # TODO: Check which connections are mutually exclusive and add them here!
     )
@@ -159,7 +159,7 @@ class RelaisMatrix:
             elif sw.startswith("D"):
                 final_bitmask |= 1 << num
             else:
-                raise ValueError(f"Unkown switch {sw}")
+                raise ValueError(f"Unknown switch {sw}")
 
         # Don't need to perform a break-before-make cycle if the
         # desired final status is already configured
@@ -196,7 +196,7 @@ class RelaisMatrix:
 
             unknown_nodes = set(path) - set(self.CONNECTIONS)
             if unknown_nodes:
-                raise ValueError("Unkown path elements: " + ", ".join(sorted(unknown_nodes)))
+                raise ValueError("Unknown path elements: " + ", ".join(sorted(unknown_nodes)))
 
             duplicate_nodes = set(a for a, b in zip(sorted(path)[:-1], sorted(path)[1:]) if a == b)
 

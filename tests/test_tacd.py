@@ -223,14 +223,14 @@ def test_tacd_eet_analog(strategy, online, endpoint, link, bounds, precondition)
 @pytest.mark.lg_feature("eet")
 def test_tacd_uart_3v3(strategy, online):
     """
-    Test if the 3.3V suppy from the DUT UART power is enabled as expected.
+    Test if the 3.3V supply from the DUT UART power is enabled as expected.
 
     These 3.3V are not managed by tacd, but are statically enabled in the devicetree.
     With this test, we just make sure this is still the case.
     """
     strategy.eet.link(
         "UART_VCC -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT"
-    )  # Connect the 3.3V suppy from the DUT UART to PWR_OUT, so we can measure it using the DUT power switch
+    )  # Connect the 3.3V supply from the DUT UART to PWR_OUT, so we can measure it using the DUT power switch
     time.sleep(0.5)
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
