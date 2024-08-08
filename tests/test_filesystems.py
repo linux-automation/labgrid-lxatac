@@ -67,6 +67,13 @@ def test_system0_partition_sizes(system0_shell):
     partition_sizes(system0_shell)
 
 
+@pytest.mark.xfail(
+    reason="There is a known bug, in which directories are created in `/srv` during the first boot. "
+    "If this happens `/srv` will not be mounted with the correct partition on consecutive boots in this slot. "
+    "Since we have r/w root-partition most of the system behaves as expected. "
+    "But changes to /srv are lost on update. "
+    "This behavior needs to be fixed - but is currently expected to fail."
+)
 @pytest.mark.slow
 def test_system0_filesystem_sizes(system0_shell):
     filesystem_sizes(system0_shell)
