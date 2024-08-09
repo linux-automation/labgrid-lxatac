@@ -1,0 +1,8 @@
+*~
+.*.sw*
+*.pyc
+.cache
+__pycache__
+.pytest_cache/
+console_*
+pytestdebug.log
