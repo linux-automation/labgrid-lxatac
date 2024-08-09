@@ -22,6 +22,8 @@ What's in this Repository
 - `lxatac-ptx.yaml`: labgrid environment used to test the Pengutronix-internal flavor of `meta-lxatac`.
 - `lxatac-eet.py` and `agents/lxatac-eet.py`: labgrid driver and agent for the custom test device.
 - `contrib/`: Additional configuration for the custom test device.
+- `reproducers/`: Scripts that use labgrid to reproduce some specific state or bug on the LXA TAC.
+   These scripts are usually written in a one-off fashion and only used at the time of writing.
 
 How to run these tests
 ----------------------
