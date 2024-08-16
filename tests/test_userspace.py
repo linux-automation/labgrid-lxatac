@@ -24,22 +24,6 @@ def test_system_running_1(system1_shell):
     system_running(system1_shell)
 
 
-@pytest.mark.lg_feature("ptx-flavor")
-def test_nfs_mounts(env, target, shell):
-    """Test that the NFS mounts listed in the environment config are available."""
-    ptx_works = env.config.get_target_option(target.name, "ptx-works-available")
-
-    mount = shell.run_check("mount")
-    mount = "\n".join(mount)
-
-    for ptx_work in ptx_works:
-        assert ptx_work in mount
-
-        dir_contents = shell.run_check(f"ls -1 {ptx_work}")
-        # make sure the directories contain something
-        assert len(dir_contents) > 0
-
-
 def test_chrony(shell):
     """Test that chronyd is running and synchronized."""
     [chronyc] = shell.run_check("chronyc -c tracking")

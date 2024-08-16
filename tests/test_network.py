@@ -1,7 +1,9 @@
+import hashlib
 import json
 from time import sleep
 
 import pytest
+import requests
 
 
 @pytest.fixture(scope="function")
@@ -124,3 +126,54 @@ def test_network_interfaces(shell):
         found_interfaces.add(line.split(":")[1].strip())
 
     assert expected_interfaces == found_interfaces
+
+
+@pytest.mark.lg_feature("ptx-flavor")
+def test_network_nfs_io(shell):
+    """Test nfs share io"""
+    ptx_works = shell.target.env.config.get_target_option(shell.target.name, "ptx-works-available")
+    assert len(ptx_works) > 0
+
+    mount = shell.run_check("mount")
+    mount = "\n".join(mount)
+
+    # Iterate over all available shares and check whether io operation is possible
+    for ptx_work in ptx_works:
+        assert ptx_work in mount
+
+        dir_contents = shell.run_check(f"ls -1 {ptx_work}")
+        # make sure the directories contain something
+        assert len(dir_contents) > 0
+
+        shell.run_check(f"cd {ptx_work}")
+
+        # Create a file on the share
+        file, _, returncode = shell.run("mktemp -p .")
+        assert returncode == 0
+        assert len(file) > 0
+
+        shell.run_check(f"rm {file[0]}")
+
+
+def test_network_http_io(strategy, shell):
+    """Test http server file io"""
+
+    # Create test file
+    shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
+    output, _, returncode = shell.run("md5sum /srv/www/test_file")
+    assert returncode == 0
+    assert len(output) > 0
+
+    # Cut out hash from output
+    checksum1 = output[0].split(" ")[0]
+
+    # Download test file
+    r = requests.get(f"http://{strategy.network.address}/srv/test_file")
+    assert r.status_code == 200
+
+    checksum2 = hashlib.md5(r.content).hexdigest()
+
+    assert checksum1 == checksum2, f"checksums are different: {checksum1} != {checksum2}"
+
+    # Delete test file
+    shell.run_check("rm /srv/www/test_file")
