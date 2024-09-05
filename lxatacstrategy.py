@@ -2,9 +2,8 @@ import enum
 import json
 
 import attr
+from labgrid import step, target_factory
 from labgrid.driver import ExecutionError
-from labgrid.factory import target_factory
-from labgrid.step import step
 from labgrid.strategy import Strategy, StrategyError
 
 # Possible state transitions:
