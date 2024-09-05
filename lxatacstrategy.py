@@ -60,9 +60,6 @@ class LXATACStrategy(Strategy):
     mmc_bootstrapped = attr.ib(default=False)
     rauc_installed = attr.ib(default=False)
 
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-
     @property
     def target_hostname(self):
         fqdn = self.network.address
