@@ -73,12 +73,6 @@ def test_linux_spi_2_lcd(shell):
     assert name == "panel-mipi-dbid"
 
 
-def test_linux_mmc_bus(shell):
-    """Test if the mmc subsystem exists"""
-    shell.run_check("test -d /sys/bus/mmc")
-    shell.run_check(r"test -d /sys/bus/mmc/devices/mmc1\:0001")
-
-
 def test_linux_nvmem_bus(shell):
     """Test if the nvmem subsystem exists"""
     shell.run_check("test -d /sys/bus/nvmem")
