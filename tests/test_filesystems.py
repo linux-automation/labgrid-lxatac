@@ -5,32 +5,6 @@ MEGA = 1_000 * KILO
 GIGA = 1_000 * MEGA
 
 
-def partition_sizes(shell):
-    # These tests are not RAUC tests per se, but we want to run them for both
-    # slots and jamming them in between the RAUC tests using e.g., dependencies
-    # did not work to well / was even messier than just placing them here.
-
-    # $ fdisk -l --bytes -o Device,Size /dev/mmcblk1
-    # Disk /dev/mmcblk1: 14.82 GiB, 15913189376 bytes, 31080448 sector
-    # Units: sectors of 1 * 512 = 512 bytes
-    # ...
-    # Device                Size
-    # /dev/mmcblk1p1     1048576
-    # /dev/mmcblk1p2  2147483648
-    # ...
-    part_sizes = shell.run_check("fdisk -l --bytes -o Device,Size /dev/mmcblk1")
-
-    # [["/dev/mmcblk1p1", "1048576"], ["/dev/mmcblk1p2", "2147483648"] ...
-    part_sizes = list(line.split() for line in part_sizes if line.startswith("/dev/mmcblk"))
-
-    # {"/dev/mmcblk1p1": 1048576, "/dev/mmcblk1p2": 2147483648}
-    part_sizes = dict((name, int(size)) for (name, size) in part_sizes)
-
-    assert part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
-    assert part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
-    assert part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
-
-
 def filesystem_sizes(shell):
     # These tests are not RAUC tests per se, but we want to run them for both
     # slots and jamming them in between the RAUC tests using e.g., dependencies
@@ -62,9 +36,26 @@ def filesystem_sizes(shell):
     assert int(df["/var/volatile"]["Used"]) / int(df["/var/volatile"]["1B-blocks"]) < 0.2
 
 
-@pytest.mark.slow
-def test_system0_partition_sizes(system0_shell):
-    partition_sizes(system0_shell)
+def test_partition_sizes(shell):
+    # $ fdisk -l --bytes -o Device,Size /dev/mmcblk1
+    # Disk /dev/mmcblk1: 14.82 GiB, 15913189376 bytes, 31080448 sector
+    # Units: sectors of 1 * 512 = 512 bytes
+    # ...
+    # Device                Size
+    # /dev/mmcblk1p1     1048576
+    # /dev/mmcblk1p2  2147483648
+    # ...
+    part_sizes = shell.run_check("fdisk -l --bytes -o Device,Size /dev/mmcblk1")
+
+    # [["/dev/mmcblk1p1", "1048576"], ["/dev/mmcblk1p2", "2147483648"] ...
+    part_sizes = list(line.split() for line in part_sizes if line.startswith("/dev/mmcblk"))
+
+    # {"/dev/mmcblk1p1": 1048576, "/dev/mmcblk1p2": 2147483648}
+    part_sizes = dict((name, int(size)) for (name, size) in part_sizes)
+
+    assert part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
 
 
 @pytest.mark.xfail(
@@ -77,11 +68,6 @@ def test_system0_partition_sizes(system0_shell):
 @pytest.mark.slow
 def test_system0_filesystem_sizes(system0_shell):
     filesystem_sizes(system0_shell)
-
-
-@pytest.mark.slow
-def test_system1_partition_sizes(system1_shell):
-    partition_sizes(system1_shell)
 
 
 @pytest.mark.slow
