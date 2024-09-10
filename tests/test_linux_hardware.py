@@ -38,10 +38,39 @@ def test_linux_i2c_bus_2_pmic(shell):
     assert name == "stpmic1"
 
 
-def test_linux_spi_bus(shell):
-    """Test if the spi subsystem exists"""
-    shell.run_check("test -d /sys/bus/spi")
-    shell.run_check("test -d /sys/class/drm/card0-SPI-1/")
+def test_linux_spi_0_ethernet_switch(shell):
+    """
+    Test if the Ethernet switch on spi-0 works.
+    """
+    shell.run_check("test -d /sys/bus/spi/devices/spi0.0")
+
+    # Statistics for the uplink interface are read from the Ethernet switch using spi0.
+    # So a non-zero value will indicate that the device on the bus works.
+    rx_packets = shell.run_check("ethtool -S uplink  | grep rx_packets")[0]
+    assert int(rx_packets.split(":")[-1]) > 0
+
+
+def test_linux_spi_1_adc(shell):
+    """
+    Test if the ADC on spi-1 works.
+    """
+
+    # The voltage on power board switch is very likely not zero.
+    # So if we can ready anything else, SPI to the ADC very likely works.
+    # (Also: the tacd tests using these measurements would very likely fail.)
+    digits = shell.run_check(r"cat /sys/bus/spi/devices/spi1.0/iio\:device3/in_voltage_raw")[0]
+    assert int(digits) > 0
+
+
+def test_linux_spi_2_lcd(shell):
+    """
+    Test if the framebuffer for the LCD on spi-2 exists.
+    """
+
+    # This is not a test of the SPI device itself, since we do not get any feedback from the display.
+    # But this way, we at least know that the correct drm device has been probed.
+    name = shell.run_check("cat /sys/bus/spi/devices/spi2.0/graphics/fb0/name")[0]
+    assert name == "panel-mipi-dbid"
 
 
 def test_linux_mmc_bus(shell):
