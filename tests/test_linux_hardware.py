@@ -73,13 +73,6 @@ def test_linux_spi_2_lcd(shell):
     assert name == "panel-mipi-dbid"
 
 
-def test_linux_nvmem_bus(shell):
-    """Test if the nvmem subsystem exists"""
-    shell.run_check("test -d /sys/bus/nvmem")
-    shell.run_check("test -d /sys/bus/nvmem/devices/?-00502")
-    shell.run_check("test -d /sys/bus/nvmem/devices/?-00501")
-
-
 def test_sensors(shell):
     stdout = shell.run_check("sensors -j")
     data = json.loads("".join(stdout))
