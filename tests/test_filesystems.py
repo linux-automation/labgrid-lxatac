@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 KILO = 1_000
@@ -37,25 +39,14 @@ def filesystem_sizes(shell):
 
 
 def test_partition_sizes(shell):
-    # $ fdisk -l --bytes -o Device,Size /dev/mmcblk1
-    # Disk /dev/mmcblk1: 14.82 GiB, 15913189376 bytes, 31080448 sector
-    # Units: sectors of 1 * 512 = 512 bytes
-    # ...
-    # Device                Size
-    # /dev/mmcblk1p1     1048576
-    # /dev/mmcblk1p2  2147483648
-    # ...
-    part_sizes = shell.run_check("fdisk -l --bytes -o Device,Size /dev/mmcblk1")
+    stdout = shell.run_check("lsblk -b --json /dev/mmcblk1")
+    json_info = json.loads("".join(stdout))
 
-    # [["/dev/mmcblk1p1", "1048576"], ["/dev/mmcblk1p2", "2147483648"] ...
-    part_sizes = list(line.split() for line in part_sizes if line.startswith("/dev/mmcblk"))
+    part_sizes = {child["name"]: child["size"] for child in json_info["blockdevices"][0]["children"]}
 
-    # {"/dev/mmcblk1p1": 1048576, "/dev/mmcblk1p2": 2147483648}
-    part_sizes = dict((name, int(size)) for (name, size) in part_sizes)
-
-    assert part_sizes["/dev/mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
-    assert part_sizes["/dev/mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
-    assert part_sizes["/dev/mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
+    assert part_sizes["mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
+    assert part_sizes["mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
 
 
 @pytest.mark.xfail(
