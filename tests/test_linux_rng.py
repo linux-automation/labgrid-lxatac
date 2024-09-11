@@ -18,5 +18,4 @@ def test_dev_hwrng(shell):
 
 def test_hwrng_task(shell):
     """Test that hwrng kernel task is running"""
-    _, _, exit = shell.run("pgrep -P 2 -x hwrng")
-    assert exit == 0
+    shell.run_check("pgrep -P 2 -x hwrng")

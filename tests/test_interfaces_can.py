@@ -10,8 +10,7 @@ def test_can_interface_can0(shell):
     can0_iobus is used by the IOBus-server and is thus already configured and up.
     """
 
-    output, _, rc = shell.run("ip -j -detail l show dev can0_iobus")
-    assert rc == 0
+    output = shell.run_check("ip -j -detail l show dev can0_iobus")
     data = json.loads("\n".join(output))
     assert len(data) == 1
     assert data[0]["linkinfo"]["info_data"]["bittiming"]["bitrate"] == 101052
@@ -25,8 +24,7 @@ def test_can_interface_can1(shell):
     can1 is unused in normal operation is thus not configured.
     """
 
-    output, _, rc = shell.run("ip -j l show dev can1")
-    assert rc == 0
+    output = shell.run_check("ip -j l show dev can1")
     data = json.loads("\n".join(output))
     assert len(data) == 1
 

@@ -14,11 +14,9 @@ def test_clock_system(shell):
         host_start_time = monotonic()
 
         date_fmt = "'%Y-%m-%d %H:%M:%S.%N'"
-        stdout, _, rc = shell.run(
+        stdout = shell.run_check(
             f"date -u +{date_fmt}; sleep {sleep}; date -u +{date_fmt}", timeout=float(sleep) + 5.0
         )
-
-        assert rc == 0
 
         # `date` on the DUT supports %N (nanoseconds), `datetime` can only parse %f (microseconds).
         # `date` adds zero-padding to all fields, so we can simply drop the last three digits of %N.

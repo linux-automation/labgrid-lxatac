@@ -35,37 +35,30 @@ def test_network_tftp(prepare_network, shell):
     """Test tftp functionality"""
 
     # Create test file in tftp directory and grant access to it
-    stdout, stderr, returncode = shell.run("touch /srv/tftp/test_file && chmod o+w /srv/tftp/test_file")
-    assert returncode == 0
+    shell.run_check("touch /srv/tftp/test_file && chmod o+w /srv/tftp/test_file")
 
     # Create test file that will be uploaded
-    stdout, stderr, returncode = shell.run("dd if=/dev/random of=./test_file bs=1M count=15")
-    assert returncode == 0
+    shell.run_check("dd if=/dev/random of=./test_file bs=1M count=15")
 
     # Generate checksum
-    checksum1, stderr, returncode = shell.run("md5sum ./test_file")
-    assert returncode == 0
+    checksum1 = shell.run_check("md5sum ./test_file")
     assert len(checksum1) > 0
 
     # Upload file to tftp server
-    stdout, stderr, returncode = shell.run("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2")
-    assert returncode == 0
+    shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2")
 
     # Download file from tftp server
-    stdout, stderr, returncode = shell.run("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2")
-    assert returncode == 0
+    shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2")
 
     # Generate checksum
-    checksum2, stderr, returncode = shell.run("md5sum ./test_file")
-    assert returncode == 0
+    checksum2 = shell.run_check("md5sum ./test_file")
     assert len(checksum2) > 0
 
     # Compare checksums
     assert checksum1 == checksum2, f"checksum are different: {checksum1} != {checksum2}"
 
     # Clean up
-    stdout, stderr, returncode = shell.run("rm /srv/tftp/test_file ./test_file")
-    assert returncode == 0
+    shell.run_check("rm /srv/tftp/test_file ./test_file")
 
 
 @pytest.mark.slow
@@ -89,8 +82,7 @@ def test_network_performance(prepare_network, shell, bandwidth, expected):
     shell.run(f"ip netns exec dut-namespace iperf3 -s -1 -p {port} 2>&1 >/dev/null &")
 
     # Run iperf client client in default network namespace
-    stdout, stderr, returncode = shell.run(f"iperf3 -J -c 10.11.12.1 -p {port}")
-    assert returncode == 0
+    stdout = shell.run_check(f"iperf3 -J -c 10.11.12.1 -p {port}")
     assert len(stdout) > 0
 
     results = json.loads("".join(stdout), strict=False)
@@ -160,8 +152,7 @@ def test_network_http_io(strategy, shell):
 
     # Create test file
     shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
-    output, _, returncode = shell.run("md5sum /srv/www/test_file")
-    assert returncode == 0
+    output = shell.run_check("md5sum /srv/www/test_file")
     assert len(output) > 0
 
     # Cut out hash from output
