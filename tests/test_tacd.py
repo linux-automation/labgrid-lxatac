@@ -282,6 +282,48 @@ def test_tacd_dut_power_switchable(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
+def test_tacd_dut_power_off_floating(strategy, online):
+    """
+    Test if the tacd handles Off and OffFloating correctly.
+
+    This is done by connecting a 5V source with a 1k internal resistance to the output of the power switch.
+    During `OffFloting` the voltage must be higher as in `Off` since the additional load must be missing.
+
+    The 5V are provided from the VBus of the test-systems USB and are known to be unstable.
+    """
+
+    # Switch power switch to off. The output is loaded with 10k
+    r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"Off"')
+    assert r.status_code == 204
+
+    # Connect 5V via 1K Ohm to PWR_OUT
+    strategy.eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
+    time.sleep(0.2)  # Give measurements a moment to settle
+
+    # measure DUT voltage
+    r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
+    assert r.status_code == 200
+    off_voltage = r.json()["value"]
+    assert 3 < off_voltage < 5.5  # USB supply voltage can be all over the place
+
+    # Switch power switch to off without the load.
+    r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"OffFloating"')
+    assert r.status_code == 204
+    time.sleep(0.2)  # Give measurements a moment to settle
+
+    # measure DUT voltage
+    r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
+    assert r.status_code == 200
+    floating_voltage = r.json()["value"]
+    assert 3 < floating_voltage < 5.5  # USB supply voltage can be all over the place
+
+    assert floating_voltage > off_voltage
+
+    # Voltage relation is given by the voltage divider of 1k and 10k
+    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.1)
+
+
+@pytest.mark.lg_feature("eet")
 def test_tacd_iobus_power_switchable(strategy, online):
     """
     Test if the tacd can switch the IOBus power and if measurements are correct.
@@ -317,6 +359,3 @@ def test_tacd_iobus_power_switchable(strategy, online):
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/voltage")
     assert r.status_code == 200
     assert -0.5 < r.json()["value"] < 0.5
-
-
-# TODO: Add a test that checks if "OffFloating" works with the power switch
