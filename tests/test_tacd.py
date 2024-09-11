@@ -1,14 +1,22 @@
+import json
 import time
 
 import pytest
 import requests
 
 
-def test_tacd_http_temperature(strategy, online):
+def test_tacd_http_temperature(strategy, online, shell):
     """Test tacd temperature endpoint."""
     r = requests.get(f"http://{strategy.network.address}/v1/tac/temperatures/soc")
+    temperature = r.json()["value"]
     assert r.status_code == 200
-    assert 0 < r.json()["value"] < 70
+    assert 0 < temperature < 70
+
+    stdout = shell.run_check("sensors -j")
+    data = json.loads("".join(stdout))
+    assert "cpu_thermal-virtual-0" in data
+
+    assert abs(data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] - temperature) < 3
 
 
 @pytest.mark.parametrize(
