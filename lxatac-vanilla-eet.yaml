@@ -41,7 +41,7 @@ targets:
           ethmux: "ethmux"
     options:
       ptx-works-available: []
-      usbpath: 1-1.1:1.0
+      usb_storage: /dev/disk/by-path/platform-5800d000.usb-usbv2-0:1.1:1.0-scsi-0:0:0:0
     features:
       - eet
       - ethmux
