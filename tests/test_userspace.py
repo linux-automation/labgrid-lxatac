@@ -43,7 +43,7 @@ def test_switch_configuration(shell):
     bridge_json = json.loads(bridge)
 
     # interface exists
-    any(b["ifname"] == uplink_ifname for b in bridge_json)
+    assert any(b["ifname"] == uplink_ifname for b in bridge_json)
 
     # interface is in expected state
     for b in bridge_json:
