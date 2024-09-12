@@ -9,9 +9,15 @@ import requests
 
 @pytest.fixture(scope="function")
 def prepare_network(strategy, shell):
-    """In order to test network, we use ourselves as an endpoint by using an Ethmux.
+    """
+    To test the TAC's network, we use ourselves as an endpoint by using an Ethmux.
     For that, we create a new namespace where we put the DUT port in and which
-    will communicate with the uplink port through the Ethmux."""
+    will communicate with the uplink port through the Ethmux.
+
+    This way we can check that both network ports are working as expected.
+    And it also allows us to test local services like TFTP and HTTP server against
+    ourselves without the need for an external test setup on the labgrid exporter.
+    """
     strategy.ethmux.set(False)  # Connect Upstream Ethernet-port to DUT Ethernet-port
     shell.run_check("systemctl stop tacd")
     shell.run_check("systemctl stop NetworkManager")
