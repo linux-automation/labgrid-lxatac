@@ -42,31 +42,33 @@ def prepare_network(strategy, shell):
 def test_network_tftp(prepare_network, shell):
     """Test tftp functionality"""
 
-    # Create test file in tftp directory and grant access to it
-    shell.run_check("touch /srv/tftp/test_file && chmod o+w /srv/tftp/test_file")
+    try:
+        # Create test file in tftp directory and grant access to it
+        shell.run_check("touch /srv/tftp/test_file && chmod o+w /srv/tftp/test_file")
 
-    # Create test file that will be uploaded
-    shell.run_check("dd if=/dev/random of=./test_file bs=1M count=15")
+        # Create test file that will be uploaded
+        shell.run_check("dd if=/dev/random of=./test_file bs=1M count=15")
 
-    # Generate checksum
-    checksum1 = shell.run_check("md5sum ./test_file")
-    assert len(checksum1) > 0
+        # Generate checksum
+        checksum1 = shell.run_check("md5sum ./test_file")
+        assert len(checksum1) > 0
 
-    # Upload file to tftp server
-    shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2")
+        # Upload file to tftp server
+        shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2")
 
-    # Download file from tftp server
-    shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2")
+        # Download file from tftp server
+        shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2")
 
-    # Generate checksum
-    checksum2 = shell.run_check("md5sum ./test_file")
-    assert len(checksum2) > 0
+        # Generate checksum
+        checksum2 = shell.run_check("md5sum ./test_file")
+        assert len(checksum2) > 0
 
-    # Compare checksums
-    assert checksum1 == checksum2, f"checksum are different: {checksum1} != {checksum2}"
+        # Compare checksums
+        assert checksum1 == checksum2, f"checksum are different: {checksum1} != {checksum2}"
 
-    # Clean up
-    shell.run_check("rm /srv/tftp/test_file ./test_file")
+    finally:
+        # Clean up
+        shell.run("rm /srv/tftp/test_file ./test_file")
 
 
 @pytest.mark.slow
@@ -78,51 +80,50 @@ def test_network_tftp(prepare_network, shell):
 def test_network_performance(prepare_network, shell, bandwidth, expected):
     """Test network performance via iperf3"""
 
-    # Set bandwidth on both interfaces
-    shell.run(f"ethtool -s uplink speed {bandwidth}")
-    shell.run(f"ip netns exec dut-namespace ethtool -s dut speed {bandwidth}")
+    try:
+        # Set bandwidth on both interfaces
+        shell.run_check(f"ethtool -s uplink speed {bandwidth}")
+        shell.run_check(f"ip netns exec dut-namespace ethtool -s dut speed {bandwidth}")
 
-    # Await setup time
-    sleep(5)
+        # Await setup time
+        sleep(5)
 
-    # Start iperf server in network namespace
-    port = 5151
-    with helper.SystemdRun(f"ip netns exec dut-namespace iperf3 -s -1 -p {port}", shell):
-        # Run iperf client client in default network namespace
-        stdout = shell.run_check(f"iperf3 -J -c 10.11.12.1 -p {port}")
-        assert len(stdout) > 0
+        # Start iperf server in network namespace
+        port = 5151
+        with helper.SystemdRun(f"ip netns exec dut-namespace iperf3 -s -1 -p {port}", shell):
+            # Run iperf client client in default network namespace
+            stdout = shell.run_check(f"iperf3 -J -c 10.11.12.1 -p {port}")
 
-        results = json.loads("".join(stdout), strict=False)
+            results = json.loads("".join(stdout), strict=False)
 
-        mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
-        assert mbps_received == expected
+            mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
+            assert mbps_received == expected
 
-    # Reset bandwidth configuration
-    shell.run("ethtool -s uplink speed 1000")
-    shell.run("ip netns exec dut-namespace ethtool -s dut speed 1000")
+    finally:
+        # Reset bandwidth configuration
+        shell.run("ethtool -s uplink speed 1000")
+        shell.run("ip netns exec dut-namespace ethtool -s dut speed 1000")
 
 
 def test_network_interfaces(shell):
     """Test whether all expected network interfaces are present"""
 
     found_interfaces = set()
-    stdout = shell.run_check("ip link show")
+    stdout = shell.run_check("ip --json link show")
+    interfaces = json.loads("".join(stdout))
 
     expected_interfaces = {
         "lo",
         "can0_iobus",
         "can1",
         "switch",
-        "dut@switch",
-        "uplink@switch",
+        "dut",
+        "uplink",
         "tac-bridge",
     }
 
-    for line in stdout:
-        if line[0] in (" ", "\t"):
-            continue
-
-        found_interfaces.add(line.split(":")[1].strip())
+    for interface in interfaces:
+        found_interfaces.add(interface["ifname"])
 
     assert expected_interfaces == found_interfaces
 
@@ -157,21 +158,23 @@ def test_network_nfs_io(shell):
 def test_network_http_io(strategy, shell):
     """Test http server file io"""
 
-    # Create test file
-    shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
-    output = shell.run_check("md5sum /srv/www/test_file")
-    assert len(output) > 0
+    try:
+        # Create test file
+        shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
+        output = shell.run_check("md5sum /srv/www/test_file")
+        assert len(output) > 0
 
-    # Cut out hash from output
-    checksum1 = output[0].split(" ")[0]
+        # Cut out hash from output
+        checksum1 = output[0].split(" ")[0]
 
-    # Download test file
-    r = requests.get(f"http://{strategy.network.address}/srv/test_file")
-    assert r.status_code == 200
+        # Download test file
+        r = requests.get(f"http://{strategy.network.address}/srv/test_file")
+        assert r.status_code == 200
 
-    checksum2 = hashlib.md5(r.content).hexdigest()
+        checksum2 = hashlib.md5(r.content).hexdigest()
 
-    assert checksum1 == checksum2, f"checksums are different: {checksum1} != {checksum2}"
+        assert checksum1 == checksum2, f"checksums are different: {checksum1} != {checksum2}"
 
-    # Delete test file
-    shell.run_check("rm /srv/www/test_file")
+    finally:
+        # Delete test file
+        shell.run("rm /srv/www/test_file")
