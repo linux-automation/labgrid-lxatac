@@ -146,6 +146,12 @@ class LXATACStrategy(Strategy):
 
         return rauc_status["booted"]
 
+    def wait_online(self):
+        self.shell.poll_until_success("ping -c1 _gateway", timeout=60.0)
+
+        # Also make sure we have accurate time, so that TLS works.
+        self.shell.run_check("chronyc waitsync", timeout=120.0)
+
     @step(args=["status"])
     def transition(self, status, *, step):
         if not isinstance(status, Status):
@@ -213,10 +219,7 @@ class LXATACStrategy(Strategy):
             if self.status not in [Status.system0, Status.system1]:
                 self.transition(Status.shell)
 
-            self.shell.poll_until_success("ping -c1 _gateway", timeout=60.0)
-
-            # Also make sure we have accurate time, so that TLS works.
-            self.shell.run_check("chronyc waitsync", timeout=120.0)
+            self.wait_online()
 
         elif status == Status.system0:
             self.transition(Status.network)

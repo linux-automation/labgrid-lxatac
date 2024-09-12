@@ -29,6 +29,7 @@ def prepare_network(strategy, shell):
     shell.run_check("systemctl start NetworkManager")
     shell.run_check("systemctl start tacd")
     strategy.ethmux.set(True)  # Reconnect Upstream Ethernet-port to Lab Network
+    strategy.wait_online()
 
 
 @pytest.mark.lg_feature("ethmux")
