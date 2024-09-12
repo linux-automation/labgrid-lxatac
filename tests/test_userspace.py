@@ -1,3 +1,4 @@
+import csv
 import json
 
 import pytest
@@ -26,11 +27,12 @@ def test_system_running_1(system1_shell):
 
 def test_chrony(shell):
     """Test that chronyd is running and synchronized."""
-    [chronyc] = shell.run_check("chronyc -c tracking")
-    chronyc_csv = chronyc.split(",")
+    stdout = shell.run_check("chronyc -c tracking")
+    csv_reader = csv.reader(stdout)
 
-    # make sure stratum > 0 is used
-    assert int(chronyc_csv[2]) > 0
+    for line in csv_reader:
+        # make sure stratum > 0 is used
+        assert int(line[2]) > 0
 
 
 def test_switch_configuration(shell):
