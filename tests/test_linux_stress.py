@@ -3,8 +3,7 @@ import yaml
 
 
 def run_stressor(shell, args):
-    output = shell.run_check(f"stress-ng --yaml /tmp/stress-ng.yaml --timeout 10s --metrics {args}")
-    print(output)
+    shell.run_check(f"stress-ng --yaml /tmp/stress-ng.yaml --timeout 10s --metrics {args}")
     data = shell.run_check("cat /tmp/stress-ng.yaml")
     data = yaml.load("\n".join(data), Loader=yaml.SafeLoader)
     return data
