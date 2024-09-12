@@ -2,6 +2,7 @@ import hashlib
 import json
 from time import sleep
 
+import helper
 import pytest
 import requests
 
@@ -79,16 +80,15 @@ def test_network_performance(prepare_network, shell, bandwidth, expected):
 
     # Start iperf server in network namespace
     port = 5151
-    shell.run(f"ip netns exec dut-namespace iperf3 -s -1 -p {port} 2>&1 >/dev/null &")
+    with helper.SystemdRun(f"ip netns exec dut-namespace iperf3 -s -1 -p {port}", shell):
+        # Run iperf client client in default network namespace
+        stdout = shell.run_check(f"iperf3 -J -c 10.11.12.1 -p {port}")
+        assert len(stdout) > 0
 
-    # Run iperf client client in default network namespace
-    stdout = shell.run_check(f"iperf3 -J -c 10.11.12.1 -p {port}")
-    assert len(stdout) > 0
+        results = json.loads("".join(stdout), strict=False)
 
-    results = json.loads("".join(stdout), strict=False)
-
-    mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
-    assert mbps_received == expected
+        mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
+        assert mbps_received == expected
 
     # Reset bandwidth configuration
     shell.run("ethtool -s uplink speed 1000")

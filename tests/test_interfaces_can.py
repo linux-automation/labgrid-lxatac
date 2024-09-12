@@ -1,5 +1,6 @@
 import json
 
+import helper
 import pytest
 
 
@@ -67,8 +68,7 @@ def test_can_traffic(shell, can_configured):
 
     dump_file = "/tmp/can-test"
 
-    shell.run_check(f"candump -n1 can1 > {dump_file} &")
-    shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
-
-    dump = shell.run_check(f"cat {dump_file}")
-    assert "  can1  01A   [8]  11 22 33 44 AA BB CC DD" in dump
+    with helper.SystemdRun(f'bash -c "candump -n1 can1 > {dump_file}"', shell):
+        shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
+        dump = shell.run_check(f"cat {dump_file}")
+        assert "  can1  01A   [8]  11 22 33 44 AA BB CC DD" in dump
