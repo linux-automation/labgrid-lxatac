@@ -7,11 +7,9 @@ from labgrid.strategy import Strategy, StrategyError
 
 # Possible state transitions:
 #
-#            +---------------------------------------------------------+
-#            v                                                         |
-#            +--------+------------+----------+  +---------------------+
-#            v        v            v          |  v                     |
-# unknown -> off -1-> bootstrap -> barebox -> shell -> network --------+
+#            +--------+------------+----------+
+#            v        v            v          |
+# unknown -> off -1-> bootstrap -> barebox -> shell
 #
 # 1) Via bootstrap() but only once
 
@@ -22,7 +20,6 @@ class Status(enum.Enum):
     bootstrap = 2
     barebox = 3
     shell = 4
-    network = 5
 
 
 @target_factory.reg_driver
@@ -119,7 +116,7 @@ class LXATACStrategy(Strategy):
             return
 
         elif status == Status.off:
-            if self.status in [Status.shell, Status.network]:
+            if self.status == Status.shell:
                 # Cleanly shut down the labgrid exporter to help the
                 # coordinator clean up stale resources.
                 self.shell.run("systemctl stop labgrid-exporter", timeout=90)
@@ -155,19 +152,14 @@ class LXATACStrategy(Strategy):
             self.barebox.run_check("global linux.bootargs.loglevel=loglevel=6")
 
         elif status == Status.shell:
-            # No need to reboot just because we checked for network connectivity.
-            if self.status not in [Status.network]:
-                # transition to barebox
-                self.transition(Status.barebox)
+            # transition to barebox
+            self.transition(Status.barebox)
 
-                self.barebox.boot("")
-                self.barebox.await_boot()
+            self.barebox.boot("")
+            self.barebox.await_boot()
 
-                self.target.activate(self.shell)
+            self.target.activate(self.shell)
             self.wait_system_ready()
-
-        elif status == Status.network:
-            self.transition(Status.shell)
             self.wait_online()
 
         else:

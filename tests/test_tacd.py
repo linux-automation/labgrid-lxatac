@@ -5,7 +5,7 @@ import pytest
 import requests
 
 
-def test_tacd_http_temperature(strategy, online, shell):
+def test_tacd_http_temperature(strategy, shell):
     """Test tacd temperature endpoint."""
     r = requests.get(f"http://{strategy.network.address}/v1/tac/temperatures/soc")
     temperature = r.json()["value"]
@@ -45,7 +45,7 @@ def test_tacd_http_adc(strategy, low, high, endpoint):
     "state",
     (b"true", b"false"),
 )
-def test_tacd_http_locator(strategy, online, state):
+def test_tacd_http_locator(strategy, shell, state):
     """Test tacd locator endpoint."""
     endpoint = "v1/tac/display/locator"
 
@@ -57,7 +57,7 @@ def test_tacd_http_locator(strategy, online, state):
     assert r.content == state
 
 
-def test_tacd_http_iobus_fault(strategy, online):
+def test_tacd_http_iobus_fault(strategy, shell):
     """Test tacd iobus fault endpoint."""
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/fault")
     assert r.status_code == 200
@@ -75,7 +75,7 @@ def test_tacd_http_iobus_fault(strategy, online):
         ("v1/output/out_1/asserted", (b"true", b"false")),
     ),
 )
-def test_tacd_http_switch_output(strategy, online, control, states):
+def test_tacd_http_switch_output(strategy, shell, control, states):
     """Test tacd output switching."""
     for state in states:
         r = requests.put(f"http://{strategy.network.address}/{control}", data=state)
@@ -214,7 +214,7 @@ def test_tacd_http_switch_output(strategy, online, control, states):
         ),
     ),
 )
-def test_tacd_eet_analog(strategy, online, endpoint, link, bounds, precondition):
+def test_tacd_eet_analog(strategy, shell, endpoint, link, bounds, precondition):
     """Test if analog measurements work with values not equal to zero."""
     if precondition:
         r = requests.put(f"http://{strategy.network.address}/{precondition[0]}", data=precondition[1])
@@ -229,7 +229,7 @@ def test_tacd_eet_analog(strategy, online, endpoint, link, bounds, precondition)
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_uart_3v3(strategy, online):
+def test_tacd_uart_3v3(strategy, shell):
     """
     Test if the 3.3V supply from the DUT UART power is enabled as expected.
 
@@ -246,7 +246,7 @@ def test_tacd_uart_3v3(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_switchable(strategy, online):
+def test_tacd_dut_power_switchable(strategy, shell):
     """
     Test if the tacd can switch the DUT power and if measurements are correct.
     """
@@ -282,7 +282,7 @@ def test_tacd_dut_power_switchable(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_off_floating(strategy, online):
+def test_tacd_dut_power_off_floating(strategy, shell):
     """
     Test if the tacd handles Off and OffFloating correctly.
 
@@ -324,7 +324,7 @@ def test_tacd_dut_power_off_floating(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_iobus_power_switchable(strategy, online):
+def test_tacd_iobus_power_switchable(strategy, shell):
     """
     Test if the tacd can switch the IOBus power and if measurements are correct.
     """

@@ -62,7 +62,7 @@ def test_rauc_install(strategy, booted_slot, set_bootstate_in_bootloader, rauc_b
 
     # Make sure we are in slot 0
     set_bootstate_in_bootloader(20, 1, 10, 1)
-    strategy.transition("network")
+    strategy.transition("shell")
     assert booted_slot() == "system0"
 
     # Bundles during testing are not signed with release keys.

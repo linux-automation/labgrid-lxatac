@@ -26,15 +26,6 @@ def shell(strategy):
     return strategy.shell
 
 
-@pytest.fixture(scope="function")
-def online(strategy):
-    try:
-        strategy.transition("network")
-    except Exception as e:
-        traceback.print_exc()
-        pytest.exit(f"Transition into online state failed: {e}", returncode=3)
-
-
 @pytest.fixture
 def default_bootstate(strategy):
     """Set default state values as setup/teardown"""
@@ -82,7 +73,7 @@ def set_bootstate_in_bootloader(strategy, default_bootstate):
 
 
 @pytest.fixture
-def rauc_bundle(target, strategy, env, shell, online):
+def rauc_bundle(target, strategy, env, shell):
     """Makes the RAUC bundle target-accessible at the returned location."""
     bundle = env.config.get_image_path("rauc_bundle")
 
