@@ -1,5 +1,4 @@
 import enum
-import json
 
 import attr
 from labgrid import step, target_factory
@@ -13,14 +12,8 @@ from labgrid.strategy import Strategy, StrategyError
 #            +--------+------------+----------+  +---------------------+
 #            v        v            v          |  v                     |
 # unknown -> off -1-> bootstrap -> barebox -> shell -> network --------+
-#                                                      | |             |
-#                                                      2 +-> system0 --+
-#                                                      v               |
-#                                                      rauc_installed -+
-#                                                      |               |
-#                                                      +---> system1 --+
+#
 # 1) Via bootstrap() but only once
-# 2) Via rauc_install() but only once
 
 
 class Status(enum.Enum):
@@ -30,9 +23,6 @@ class Status(enum.Enum):
     barebox = 3
     shell = 4
     network = 5
-    system0 = 6
-    rauc_installed = 7
-    system1 = 8
 
 
 @target_factory.reg_driver
@@ -58,7 +48,6 @@ class LXATACStrategy(Strategy):
 
     status = attr.ib(default=Status.unknown)
     mmc_bootstrapped = attr.ib(default=False)
-    rauc_installed = attr.ib(default=False)
 
     @property
     def target_hostname(self):
@@ -103,49 +92,6 @@ class LXATACStrategy(Strategy):
 
         self.mmc_bootstrapped = True
 
-    def rauc_install(self):
-        self.transition(Status.system0)
-
-        self.target.activate(self.httpprovider)
-
-        bundle = self.target.env.config.get_image_path("rauc_bundle")
-        bundle_url = self.httpprovider.stage(bundle)
-
-        self.shell.run_check(f'curl -I "{bundle_url}"')
-
-        self.shell.run_check("rauc-enable-cert devel.cert.pem")
-
-        try:
-            self.shell.run_check(f'rauc install "{bundle_url}"', timeout=600)
-        except ExecutionError:
-            self.shell.run("journalctl --boot --unit rauc.service")
-            raise
-
-        self.target.deactivate(self.httpprovider)
-
-        self.rauc_installed = True
-
-    def set_bootstate(self, system0_prio, system0_attempts, system1_prio, system1_attempts):
-        self.transition(Status.barebox)
-
-        self.barebox.run_check(f"state.bootstate.system0.priority={system0_prio}")
-        self.barebox.run_check(f"state.bootstate.system0.remaining_attempts={system0_attempts}")
-
-        self.barebox.run_check(f"state.bootstate.system1.priority={system1_prio}")
-        self.barebox.run_check(f"state.bootstate.system1.remaining_attempts={system1_attempts}")
-
-        self.barebox.run_check("state -s")
-
-    def get_booted_slot(self):
-        self.transition(Status.network)
-
-        stdout = self.shell.run_check("rauc status --output-format=json", timeout=60)
-        rauc_status = json.loads(stdout[0])
-
-        assert "booted" in rauc_status, 'No "booted" key in rauc status json found'
-
-        return rauc_status["booted"]
-
     def wait_online(self):
         self.shell.poll_until_success("ping -c1 _gateway", timeout=60.0)
 
@@ -173,7 +119,7 @@ class LXATACStrategy(Strategy):
             return
 
         elif status == Status.off:
-            if self.status in [Status.shell, Status.network, Status.system0, Status.system1]:
+            if self.status in [Status.shell, Status.network]:
                 # Cleanly shut down the labgrid exporter to help the
                 # coordinator clean up stale resources.
                 self.shell.run("systemctl stop labgrid-exporter", timeout=90)
@@ -209,9 +155,8 @@ class LXATACStrategy(Strategy):
             self.barebox.run_check("global linux.bootargs.loglevel=loglevel=6")
 
         elif status == Status.shell:
-            # No need to reboot just because we checked for network connectivity
-            # or the slot we are running on.
-            if self.status not in [Status.network, Status.system0, Status.system1]:
+            # No need to reboot just because we checked for network connectivity.
+            if self.status not in [Status.network]:
                 # transition to barebox
                 self.transition(Status.barebox)
 
@@ -222,35 +167,8 @@ class LXATACStrategy(Strategy):
             self.wait_system_ready()
 
         elif status == Status.network:
-            # No need to reboot just because we checked which slot we are running on.
-            if self.status not in [Status.system0, Status.system1]:
-                self.transition(Status.shell)
-
+            self.transition(Status.shell)
             self.wait_online()
-
-        elif status == Status.system0:
-            self.transition(Status.network)
-
-            if self.get_booted_slot() != "system0":
-                self.set_bootstate(20, 1, 10, 1)
-                self.transition(Status.network)
-
-                assert self.get_booted_slot() == "system0"
-
-        elif status == Status.rauc_installed:
-            self.transition(Status.network)
-
-            if not self.rauc_installed:
-                self.rauc_install()
-
-        elif status == Status.system1:
-            self.transition(Status.rauc_installed)
-
-            if self.get_booted_slot() != "system1":
-                self.set_bootstate(10, 1, 20, 1)
-                self.transition(Status.network)
-
-                assert self.get_booted_slot() == "system1"
 
         else:
             raise StrategyError(f"no transition found from {self.status} to {status}")
