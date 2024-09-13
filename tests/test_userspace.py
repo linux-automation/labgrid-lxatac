@@ -1,29 +1,6 @@
 import csv
 import json
 
-import pytest
-from labgrid.driver import ExecutionError
-
-
-def system_running(shell):
-    try:
-        # the strategy already waits for this when transitioning to the shell state
-        shell.run_check("systemctl is-system-running")
-    except ExecutionError:
-        # gather information about failed units
-        shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
-        raise
-
-
-@pytest.mark.slow
-def test_system_running_0(system0_shell):
-    system_running(system0_shell)
-
-
-@pytest.mark.slow
-def test_system_running_1(system1_shell):
-    system_running(system1_shell)
-
 
 def test_chrony(shell):
     """Test that chronyd is running and synchronized."""

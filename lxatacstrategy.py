@@ -152,6 +152,14 @@ class LXATACStrategy(Strategy):
         # Also make sure we have accurate time, so that TLS works.
         self.shell.run_check("chronyc waitsync", timeout=120.0)
 
+    def wait_system_ready(self):
+        try:
+            self.shell.run("systemctl is-system-running --wait", timeout=90)
+        except ExecutionError:
+            # gather information about failed units
+            self.shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
+            raise
+
     @step(args=["status"])
     def transition(self, status, *, step):
         if not isinstance(status, Status):
@@ -211,8 +219,7 @@ class LXATACStrategy(Strategy):
                 self.barebox.await_boot()
 
                 self.target.activate(self.shell)
-
-            self.shell.run("systemctl is-system-running --wait", timeout=90)
+            self.wait_system_ready()
 
         elif status == Status.network:
             # No need to reboot just because we checked which slot we are running on.
