@@ -11,7 +11,8 @@ def test_partition_sizes(shell):
     stdout = shell.run_check("lsblk -b --json /dev/mmcblk1")
     json_info = json.loads("".join(stdout))
 
-    part_sizes = {child["name"]: child["size"] for child in json_info["blockdevices"][0]["children"]}
+    [mmcblk1] = json_info["blockdevices"]
+    part_sizes = {child["name"]: child["size"] for child in mmcblk1["children"]}
 
     assert part_sizes["mmcblk1p1"] in range(2_000 * MEGA, 2_500 * MEGA)
     assert part_sizes["mmcblk1p2"] in range(2_000 * MEGA, 2_500 * MEGA)
@@ -28,25 +29,25 @@ def test_partition_sizes(shell):
 def test_filesystem_sizes(shell):
     # / should have some spare space available
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /")
-    fs_info = json.loads("".join(stdout))["filesystems"][0]
+    [fs_info] = json.loads("".join(stdout))["filesystems"]
     assert fs_info["size"] in range(1_900 * MEGA, 2_500 * MEGA)
     assert fs_info["used"] / fs_info["size"] < 0.6
 
     # /srv should be mostly empty
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /srv")
-    fs_info = json.loads("".join(stdout))["filesystems"][0]
+    [fs_info] = json.loads("".join(stdout))["filesystems"]
     assert fs_info["size"] in range(8 * GIGA, 16 * GIGA)
     assert fs_info["used"] / fs_info["size"] < 0.1
 
     # /run, /tmp, /var/volatile should be mostly empty
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /run")
-    fs_info = json.loads("".join(stdout))["filesystems"][0]
+    [fs_info] = json.loads("".join(stdout))["filesystems"]
     assert fs_info["used"] / fs_info["size"] < 0.2
 
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /tmp")
-    fs_info = json.loads("".join(stdout))["filesystems"][0]
+    [fs_info] = json.loads("".join(stdout))["filesystems"]
     assert fs_info["used"] / fs_info["size"] < 0.2
 
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /var/volatile")
-    fs_info = json.loads("".join(stdout))["filesystems"][0]
+    [fs_info] = json.loads("".join(stdout))["filesystems"]
     assert fs_info["used"] / fs_info["size"] < 0.2

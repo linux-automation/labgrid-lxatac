@@ -43,8 +43,8 @@ def booted_slot(shell):
     """Returns booted slot."""
 
     def _booted_slot():
-        stdout = shell.run_check("rauc status --output-format=json", timeout=60)
-        rauc_status = json.loads(stdout[0])
+        [stdout] = shell.run_check("rauc status --output-format=json", timeout=60)
+        rauc_status = json.loads(stdout)
 
         assert "booted" in rauc_status, 'No "booted" key in rauc status json found'
 

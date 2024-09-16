@@ -64,10 +64,10 @@ def test_switch_configuration(shell):
 def test_hostname(shell):
     """Test whether the serial number is contained in the hostname"""
 
-    serial_number = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
-    serial_number = serial_number[0].rstrip("\x00")  # Remove trailing \0
+    [serial_number] = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
+    serial_number = serial_number.rstrip("\x00")  # Remove trailing \0
     serial_number = serial_number.split(".")[-1]  # Only the last part is used in the hostname
 
-    hostname = shell.run_check("hostname")[0]
+    [hostname] = shell.run_check("hostname")
 
     assert serial_number in hostname

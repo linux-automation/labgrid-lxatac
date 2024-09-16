@@ -161,11 +161,11 @@ def test_network_http_io(strategy, shell):
     try:
         # Create test file
         shell.run_check("dd if=/dev/random of=/srv/www/test_file bs=1M count=15")
-        output = shell.run_check("md5sum /srv/www/test_file")
+        [output] = shell.run_check("md5sum /srv/www/test_file")
         assert len(output) > 0
 
         # Cut out hash from output
-        checksum1 = output[0].split(" ")[0]
+        checksum1 = output.split(" ")[0]
 
         # Download test file
         r = requests.get(f"http://{strategy.network.address}/srv/test_file")

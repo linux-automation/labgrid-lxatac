@@ -13,7 +13,7 @@ def test_interface_usb_io(strategy, env, target, shell):
 
     # Create tmp file
     shell.run_check("dd if=/dev/random of=/tmp/test_file bs=1M count=15")
-    checksum1 = shell.run_check("md5sum /tmp/test_file")[0]
+    [checksum1] = shell.run_check("md5sum /tmp/test_file")
 
     # Write tmp file onto usb device
     shell.run_check(f"dd if=/tmp/test_file of={usb_storage} bs=1M count=15")
@@ -28,6 +28,6 @@ def test_interface_usb_io(strategy, env, target, shell):
     shell.run_check(f"dd if={usb_storage} of=/tmp/test_file bs=1M count=15")
 
     # Compare checksums
-    checksum2 = shell.run_check("md5sum /tmp/test_file")[0]
+    [checksum2] = shell.run_check("md5sum /tmp/test_file")
 
     assert checksum1 == checksum2, f"checksum are different: {checksum1} != {checksum2}"
