@@ -84,5 +84,13 @@ def rauc_bundle(target, strategy, env, shell):
     yield _rauc_bundle
 
 
+@pytest.fixture
+def eet(strategy):
+    eet = strategy.eet
+    yield eet
+    if eet:
+        eet.link("")
+
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: These tests run especially slow.")

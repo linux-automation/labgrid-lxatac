@@ -214,13 +214,13 @@ def test_tacd_http_switch_output(strategy, shell, control, states):
         ),
     ),
 )
-def test_tacd_eet_analog(strategy, shell, endpoint, link, bounds, precondition):
+def test_tacd_eet_analog(strategy, shell, eet, endpoint, link, bounds, precondition):
     """Test if analog measurements work with values not equal to zero."""
     if precondition:
         r = requests.put(f"http://{strategy.network.address}/{precondition[0]}", data=precondition[1])
         assert r.status_code == 204
 
-    strategy.eet.link(link)  # connect supply to output
+    eet.link(link)  # connect supply to output
     time.sleep(0.2)  # give the analog world a moment to settle
 
     r = requests.get(f"http://{strategy.network.address}/{endpoint}")
@@ -229,14 +229,14 @@ def test_tacd_eet_analog(strategy, shell, endpoint, link, bounds, precondition):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_uart_3v3(strategy, shell):
+def test_tacd_uart_3v3(strategy, shell, eet):
     """
     Test if the 3.3V supply from the DUT UART power is enabled as expected.
 
     These 3.3V are not managed by tacd, but are statically enabled in the devicetree.
     With this test, we just make sure this is still the case.
     """
-    strategy.eet.link(
+    eet.link(
         "UART_VCC -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT"
     )  # Connect the 3.3V supply from the DUT UART to PWR_OUT, so we can measure it using the DUT power switch
     time.sleep(0.5)
@@ -246,11 +246,11 @@ def test_tacd_uart_3v3(strategy, shell):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_switchable(strategy, shell):
+def test_tacd_dut_power_switchable(strategy, shell, eet):
     """
     Test if the tacd can switch the DUT power and if measurements are correct.
     """
-    strategy.eet.link(
+    eet.link(
         "AUX3 -> BUS1 -> PWR_IN, PWR_OUT -> BUS2 -> CURR -> SHUNT_15R"
     )  # Connect PWRin to 12V. Load PWRout with 15R
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"On"')  # activate DUT power switch
@@ -282,7 +282,7 @@ def test_tacd_dut_power_switchable(strategy, shell):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_off_floating(strategy, shell):
+def test_tacd_dut_power_off_floating(strategy, shell, eet):
     """
     Test if the tacd handles Off and OffFloating correctly.
 
@@ -297,7 +297,7 @@ def test_tacd_dut_power_off_floating(strategy, shell):
     assert r.status_code == 204
 
     # Connect 5V via 1K Ohm to PWR_OUT
-    strategy.eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
+    eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
     time.sleep(0.2)  # Give measurements a moment to settle
 
     # measure DUT voltage
@@ -324,11 +324,11 @@ def test_tacd_dut_power_off_floating(strategy, shell):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_iobus_power_switchable(strategy, shell):
+def test_tacd_iobus_power_switchable(strategy, shell, eet):
     """
     Test if the tacd can switch the IOBus power and if measurements are correct.
     """
-    strategy.eet.link("IOBUS_VCC -> BUS1 -> CURR -> SHUNT_68R")  # Load IOBUs VCC with 68R
+    eet.link("IOBUS_VCC -> BUS1 -> CURR -> SHUNT_68R")  # Load IOBUs VCC with 68R
     r = requests.put(
         f"http://{strategy.network.address}/v1/iobus/powered", data=b"true"
     )  # activate IOBus power supply
