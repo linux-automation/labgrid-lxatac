@@ -221,7 +221,7 @@ def test_tacd_eet_analog(strategy, shell, eet, endpoint, link, bounds, precondit
         assert r.status_code == 204
 
     eet.link(link)  # connect supply to output
-    time.sleep(0.2)  # give the analog world a moment to settle
+    time.sleep(0.5)  # give the analog world a moment to settle
 
     r = requests.get(f"http://{strategy.network.address}/{endpoint}")
     assert r.status_code == 200
