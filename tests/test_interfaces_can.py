@@ -1,5 +1,6 @@
 import json
 
+import helper
 import pytest
 
 
@@ -10,8 +11,7 @@ def test_can_interface_can0(shell):
     can0_iobus is used by the IOBus-server and is thus already configured and up.
     """
 
-    output, _, rc = shell.run("ip -j -detail l show dev can0_iobus")
-    assert rc == 0
+    output = shell.run_check("ip -j -detail l show dev can0_iobus")
     data = json.loads("\n".join(output))
     assert len(data) == 1
     assert data[0]["linkinfo"]["info_data"]["bittiming"]["bitrate"] == 101052
@@ -25,8 +25,7 @@ def test_can_interface_can1(shell):
     can1 is unused in normal operation is thus not configured.
     """
 
-    output, _, rc = shell.run("ip -j l show dev can1")
-    assert rc == 0
+    output = shell.run_check("ip -j l show dev can1")
     data = json.loads("\n".join(output))
     assert len(data) == 1
 
@@ -69,8 +68,7 @@ def test_can_traffic(shell, can_configured):
 
     dump_file = "/tmp/can-test"
 
-    shell.run_check(f"candump -n1 can1 > {dump_file} &")
-    shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
-
-    dump = shell.run_check(f"cat {dump_file}")
-    assert "  can1  01A   [8]  11 22 33 44 AA BB CC DD" in dump
+    with helper.SystemdRun(f'bash -c "candump -n1 can1 > {dump_file}"', shell):
+        shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
+        dump = shell.run_check(f"cat {dump_file}")
+        assert "  can1  01A   [8]  11 22 33 44 AA BB CC DD" in dump

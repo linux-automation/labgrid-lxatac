@@ -1,13 +1,21 @@
+import json
+
 import pytest
 
-"""Basic rauc tests"""
+"""
+Basic rauc tests
 
+These tests check how rauc and bootchooser work together to install updates.
+These tests are allowed to install a new system in slot 1 (or even break a system in slot 1), as long as they leave
+slot 0 intact.
+Each test can change the bootstate and boot into another system using the `set_bootstate_in_bootloader` fixture and
+also boot into slot 1.
+They do not need to reboot the system into slot 0. This is implicitly done via the `default_bootstate` fixture, that
+is already a dependency of `set_bootstate_in_bootloader`.
+"""
 
-# TODO: we should test if this image can install a recent stable bundle and
-# if a recent stable bundle can install this bundle.
-# That would need some strategy involvement, maybe even having a new
-# "stable bundle booted" state so we do not accidentally test the stable
-# bundle instead of the new one.
+# TODO: We need to define how we want to handle situations where no slot has boot attempts left
+#  and write a test for that.
 
 
 def test_rauc_version(shell):
@@ -19,85 +27,108 @@ def test_rauc_version(shell):
     assert "rauc" in "\n".join(stdout)
 
 
-# TODO: decide how to pass a bundle URL
-# def test_rauc_info_json(shell, get_rauc_bundle_url):
-#    """Test rauc info output in JSON"""
-#    bundle_url = get_rauc_bundle_url()
-#    result = shell.run_check(f'rauc info {bundle_url} --output-format=json > /tmp/rauc.json')
-#
-#    result = shell.run_check('cat /tmp/rauc.json')
-#    result = json.loads('\n'.join(result))
-#    assert 'Linux Automation GmbH - LXA TAC' in result['compatible']
-#    assert any('rootfs' in image for image in result['images'])
+def test_rauc_status(shell):
+    """
+    Test basic slot status readout.
+    """
+    shell.run_check("rauc status", timeout=60)
+
+
+def test_rauc_info_json(shell, rauc_bundle):
+    """
+    Test rauc info output in JSON for a rauc bundle read via http.
+    """
+
+    # Let rauc read the info for the rauc bundle.
+    # The diversion via the tmp-file allows us to ignore any output on stderr that rauc may output.
+    shell.run_check(f"rauc info {rauc_bundle()} --output-format=json > /tmp/rauc.json")
+    result = shell.run_check("cat /tmp/rauc.json")
+    result = json.loads("\n".join(result))
+
+    # Check if the bundle contains the metadata that we expect.
+    assert result["compatible"] == "Linux Automation GmbH - LXA TAC"
+    assert len(result["hooks"]) == 0, "There shouldn't be any hooks in the bundles"
+    assert len(result["images"]) == 2, 'The bundles should contain two images ("bootloader" & "rootfs")'
+    assert "rootfs" in result["images"][0], 'First image in bundle should be "rootfs"'
+    assert "bootloader" in result["images"][1], 'Second image in bundle should be "bootloader"'
 
 
 @pytest.mark.slow
-def test_system0_rauc_status(system0_shell):
+@pytest.mark.dependency()
+def test_rauc_install(strategy, booted_slot, set_bootstate_in_bootloader, rauc_bundle):
     """
-    Test basic slot status readout for system0.
+    Test if a rauc install from slot0 into slot1 works.
     """
-    system0_shell.run_check("rauc status", timeout=60)
+
+    # Make sure we are in slot 0
+    set_bootstate_in_bootloader(20, 1, 10, 1)
+    strategy.transition("shell")
+    assert booted_slot() == "system0"
+
+    # Bundles during testing are not signed with release keys.
+    # But the development key is not enabled by default.
+    # So we need to enable it first.
+    strategy.shell.run_check("rauc-enable-cert devel.cert.pem")
+
+    # Actual installation - may take a few minutes.
+    # Thus, let's use a large timeout.
+    strategy.shell.run_check(f"rauc install {rauc_bundle()}", timeout=600)
+
+    # Power cycle and reboot into the new system.
+    strategy.transition("off")
+    strategy.transition("shell")
+    assert booted_slot() == "system1"
 
 
 @pytest.mark.slow
-def test_bootchooser_boot_system0_and_mark_bad(system0_shell, strategy):
+@pytest.mark.dependency(depends=["test_rauc_install"])
+def test_bootchooser_boot_system0_and_mark_bad(strategy, booted_slot, set_bootstate_in_bootloader):
     """
-    Test if booting by priority works, mark system bad and test fallback.
+    Test if booting by priority works.
+
+    To archive this mark system slot0 bad and test fallback.
     """
-
-    slot = strategy.get_booted_slot()
-    assert slot == "system0"
-
-    # make sure there _is_ another slot
-    strategy.transition("rauc_installed")
+    set_bootstate_in_bootloader(20, 1, 10, 1)
+    strategy.transition("shell")
+    shell = strategy.shell
+    assert booted_slot() == "system0"
 
     # mark system0 bad
-    system0_shell.run_check("rauc status mark-good other")
-    system0_shell.run_check("rauc status mark-bad booted")
+    shell.run_check("rauc status mark-bad")
 
-    # transition: shell -> off -> shell
+    # Power cycle and reboot.
+    # Since slot0 is now bad, bootchooser should boot into slot1.
     strategy.transition("off")
     strategy.transition("shell")
-
-    slot = strategy.get_booted_slot()
-
-    assert slot == "system1"
-
-    # mark system0 good again, we were just pretending after all
-    system0_shell.run_check("rauc status mark-good other")
-    system0_shell.run_check("rauc status mark-active other")
+    assert booted_slot() == "system1"
 
 
 @pytest.mark.slow
-def test_system1_rauc_status(system1_shell):
+@pytest.mark.dependency(depends=["test_rauc_install"])
+def test_bootchooser_boot_system1_and_mark_bad(strategy, booted_slot, set_bootstate_in_bootloader):
     """
-    Test basic slot status readout for system1.
-    """
-    system1_shell.run_check("rauc status", timeout=60)
+    Test if booting by priority works.
 
-
-@pytest.mark.slow
-def test_bootchooser_boot_system1_and_mark_bad(system1_shell, strategy):
+    To archive this mark system slot1 bad and test fallback.
     """
-    Test if booting by priority works, mark system bad and test fallback.
-    """
-
-    slot = strategy.get_booted_slot()
-    assert slot == "system1"
+    set_bootstate_in_bootloader(10, 1, 20, 1)
+    strategy.transition("shell")
+    shell = strategy.shell
+    assert booted_slot() == "system1"
 
     # mark system1 bad
-    # TODO: why do we need all of these?
-    system1_shell.run_check("rauc status mark-bad booted")
-    system1_shell.run_check("rauc status mark-good other")
-    system1_shell.run_check("rauc status mark-active other")
+    shell.run_check("rauc status mark-bad")
 
-    # transition: shell -> off -> shell
+    # Power cycle and reboot.
+    # Since slot1 is now bad, bootchooser should boot into slot0.
     strategy.transition("off")
     strategy.transition("shell")
+    assert booted_slot() == "system0"
 
-    slot = strategy.get_booted_slot()
-    assert slot == "system0"
 
-    # mark system1 good again, we were just pretending after all
-    system1_shell.run_check("rauc status mark-good other")
-    system1_shell.run_check("rauc status mark-active other")
+@pytest.mark.slow
+def test_bootchooser(barebox):
+    """Test if bootchooser in barebox works."""
+    stdout = barebox.run_check("bootchooser -i")
+    assert stdout[0].startswith("Good targets")
+    assert stdout[1] != "none"

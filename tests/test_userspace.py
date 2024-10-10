@@ -1,36 +1,15 @@
+import csv
 import json
-
-import pytest
-from labgrid.driver import ExecutionError
-
-
-def system_running(shell):
-    try:
-        # the strategy already waits for this when transitioning to the shell state
-        shell.run_check("systemctl is-system-running")
-    except ExecutionError:
-        # gather information about failed units
-        shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
-        raise
-
-
-@pytest.mark.slow
-def test_system_running_0(system0_shell):
-    system_running(system0_shell)
-
-
-@pytest.mark.slow
-def test_system_running_1(system1_shell):
-    system_running(system1_shell)
 
 
 def test_chrony(shell):
     """Test that chronyd is running and synchronized."""
-    [chronyc] = shell.run_check("chronyc -c tracking")
-    chronyc_csv = chronyc.split(",")
+    stdout = shell.run_check("chronyc -c tracking")
+    csv_reader = csv.reader(stdout)
 
-    # make sure stratum > 0 is used
-    assert int(chronyc_csv[2]) > 0
+    for line in csv_reader:
+        # make sure stratum > 0 is used
+        assert int(line[2]) > 0
 
 
 def test_switch_configuration(shell):
@@ -41,7 +20,7 @@ def test_switch_configuration(shell):
     bridge_json = json.loads(bridge)
 
     # interface exists
-    any(b["ifname"] == uplink_ifname for b in bridge_json)
+    assert any(b["ifname"] == uplink_ifname for b in bridge_json)
 
     # interface is in expected state
     for b in bridge_json:
@@ -85,10 +64,10 @@ def test_switch_configuration(shell):
 def test_hostname(shell):
     """Test whether the serial number is contained in the hostname"""
 
-    serial_number = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
-    serial_number = serial_number[0].split("\x00")[0]  # Remove trailing \0
+    [serial_number] = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
+    serial_number = serial_number.rstrip("\x00")  # Remove trailing \0
     serial_number = serial_number.split(".")[-1]  # Only the last part is used in the hostname
 
-    hostname = shell.run_check("hostname")[0]
+    [hostname] = shell.run_check("hostname")
 
     assert serial_number in hostname

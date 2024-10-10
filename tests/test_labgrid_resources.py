@@ -9,7 +9,7 @@ from labgrid.resource.remote import RemotePlaceManager
 # resources on the fly.
 
 
-def test_labgrid_resources_simple(strategy, online):
+def test_labgrid_resources_simple(strategy, shell):
     """Test non-managed resources."""
 
     def retry_loop():
@@ -52,7 +52,7 @@ def test_labgrid_resources_simple(strategy, online):
     assert power_port_params["model"] == "rest"
 
 
-def test_labgrid_resources_usb(strategy, online):
+def test_labgrid_resources_usb(strategy, shell, eet):
     """Test ManagedResources (udev)."""
 
     def retry_loop():
@@ -81,8 +81,8 @@ def test_labgrid_resources_usb(strategy, online):
 
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
 
-    if strategy.eet:
-        strategy.eet.link("USB1_IN -> USB1_OUT, USB2_IN -> USB2_OUT, USB3_IN -> USB3_OUT")
+    if eet:
+        eet.link("USB1_IN -> USB1_OUT, USB2_IN -> USB2_OUT, USB3_IN -> USB3_OUT")
     usb_resources = retry_loop()
 
     # make sure at least one USB resource is available

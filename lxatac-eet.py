@@ -1,10 +1,9 @@
 import os.path
 
 import attr
-from labgrid.driver.common import Driver
-from labgrid.factory import target_factory
+from labgrid import step, target_factory
+from labgrid.driver import Driver
 from labgrid.resource.common import NetworkResource, Resource
-from labgrid.step import step
 from labgrid.util.agentwrapper import AgentWrapper
 
 

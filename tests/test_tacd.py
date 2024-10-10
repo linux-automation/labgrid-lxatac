@@ -1,14 +1,22 @@
+import json
 import time
 
 import pytest
 import requests
 
 
-def test_tacd_http_temperature(strategy, online):
+def test_tacd_http_temperature(strategy, shell):
     """Test tacd temperature endpoint."""
     r = requests.get(f"http://{strategy.network.address}/v1/tac/temperatures/soc")
+    temperature = r.json()["value"]
     assert r.status_code == 200
-    assert 0 < r.json()["value"] < 70
+    assert 0 < temperature < 70
+
+    stdout = shell.run_check("sensors -j")
+    data = json.loads("".join(stdout))
+    assert "cpu_thermal-virtual-0" in data
+
+    assert data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] == pytest.approx(temperature, abs=3)
 
 
 @pytest.mark.parametrize(
@@ -37,7 +45,7 @@ def test_tacd_http_adc(strategy, low, high, endpoint):
     "state",
     (b"true", b"false"),
 )
-def test_tacd_http_locator(strategy, online, state):
+def test_tacd_http_locator(strategy, shell, state):
     """Test tacd locator endpoint."""
     endpoint = "v1/tac/display/locator"
 
@@ -49,7 +57,7 @@ def test_tacd_http_locator(strategy, online, state):
     assert r.content == state
 
 
-def test_tacd_http_iobus_fault(strategy, online):
+def test_tacd_http_iobus_fault(strategy, shell):
     """Test tacd iobus fault endpoint."""
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/fault")
     assert r.status_code == 200
@@ -67,7 +75,7 @@ def test_tacd_http_iobus_fault(strategy, online):
         ("v1/output/out_1/asserted", (b"true", b"false")),
     ),
 )
-def test_tacd_http_switch_output(strategy, online, control, states):
+def test_tacd_http_switch_output(strategy, shell, control, states):
     """Test tacd output switching."""
     for state in states:
         r = requests.put(f"http://{strategy.network.address}/{control}", data=state)
@@ -206,14 +214,14 @@ def test_tacd_http_switch_output(strategy, online, control, states):
         ),
     ),
 )
-def test_tacd_eet_analog(strategy, online, endpoint, link, bounds, precondition):
+def test_tacd_eet_analog(strategy, shell, eet, endpoint, link, bounds, precondition):
     """Test if analog measurements work with values not equal to zero."""
     if precondition:
         r = requests.put(f"http://{strategy.network.address}/{precondition[0]}", data=precondition[1])
         assert r.status_code == 204
 
-    strategy.eet.link(link)  # connect supply to output
-    time.sleep(0.2)  # give the analog world a moment to settle
+    eet.link(link)  # connect supply to output
+    time.sleep(0.5)  # give the analog world a moment to settle
 
     r = requests.get(f"http://{strategy.network.address}/{endpoint}")
     assert r.status_code == 200
@@ -221,14 +229,14 @@ def test_tacd_eet_analog(strategy, online, endpoint, link, bounds, precondition)
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_uart_3v3(strategy, online):
+def test_tacd_uart_3v3(strategy, shell, eet):
     """
     Test if the 3.3V supply from the DUT UART power is enabled as expected.
 
     These 3.3V are not managed by tacd, but are statically enabled in the devicetree.
     With this test, we just make sure this is still the case.
     """
-    strategy.eet.link(
+    eet.link(
         "UART_VCC -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT"
     )  # Connect the 3.3V supply from the DUT UART to PWR_OUT, so we can measure it using the DUT power switch
     time.sleep(0.5)
@@ -238,11 +246,11 @@ def test_tacd_uart_3v3(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_switchable(strategy, online):
+def test_tacd_dut_power_switchable(strategy, shell, eet):
     """
     Test if the tacd can switch the DUT power and if measurements are correct.
     """
-    strategy.eet.link(
+    eet.link(
         "AUX3 -> BUS1 -> PWR_IN, PWR_OUT -> BUS2 -> CURR -> SHUNT_15R"
     )  # Connect PWRin to 12V. Load PWRout with 15R
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"On"')  # activate DUT power switch
@@ -274,11 +282,53 @@ def test_tacd_dut_power_switchable(strategy, online):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_iobus_power_switchable(strategy, online):
+def test_tacd_dut_power_off_floating(strategy, shell, eet):
+    """
+    Test if the tacd handles Off and OffFloating correctly.
+
+    This is done by connecting a 5V source with a 1k internal resistance to the output of the power switch.
+    During `OffFloting` the voltage must be higher as in `Off` since the additional load must be missing.
+
+    The 5V are provided from the VBus of the test-systems USB and are known to be unstable.
+    """
+
+    # Switch power switch to off. The output is loaded with 10k
+    r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"Off"')
+    assert r.status_code == 204
+
+    # Connect 5V via 1K Ohm to PWR_OUT
+    eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
+    time.sleep(0.2)  # Give measurements a moment to settle
+
+    # measure DUT voltage
+    r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
+    assert r.status_code == 200
+    off_voltage = r.json()["value"]
+    assert 3 < off_voltage < 5.5  # USB supply voltage can be all over the place
+
+    # Switch power switch to off without the load.
+    r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"OffFloating"')
+    assert r.status_code == 204
+    time.sleep(0.2)  # Give measurements a moment to settle
+
+    # measure DUT voltage
+    r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
+    assert r.status_code == 200
+    floating_voltage = r.json()["value"]
+    assert 3 < floating_voltage < 5.5  # USB supply voltage can be all over the place
+
+    assert floating_voltage > off_voltage
+
+    # Voltage relation is given by the voltage divider of 1k and 10k
+    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.1)
+
+
+@pytest.mark.lg_feature("eet")
+def test_tacd_iobus_power_switchable(strategy, shell, eet):
     """
     Test if the tacd can switch the IOBus power and if measurements are correct.
     """
-    strategy.eet.link("IOBUS_VCC -> BUS1 -> CURR -> SHUNT_68R")  # Load IOBUs VCC with 68R
+    eet.link("IOBUS_VCC -> BUS1 -> CURR -> SHUNT_68R")  # Load IOBUs VCC with 68R
     r = requests.put(
         f"http://{strategy.network.address}/v1/iobus/powered", data=b"true"
     )  # activate IOBus power supply
@@ -309,6 +359,3 @@ def test_tacd_iobus_power_switchable(strategy, online):
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/voltage")
     assert r.status_code == 200
     assert -0.5 < r.json()["value"] < 0.5
-
-
-# TODO: Add a test that checks if "OffFloating" works with the power switch

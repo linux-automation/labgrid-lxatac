@@ -1,3 +1,4 @@
+import json
 import traceback
 
 import pytest
@@ -25,35 +26,70 @@ def shell(strategy):
     return strategy.shell
 
 
-@pytest.fixture(scope="function")
-def online(strategy):
-    try:
-        strategy.transition("network")
-    except Exception as e:
-        traceback.print_exc()
-        pytest.exit(f"Transition into online state failed: {e}", returncode=3)
+@pytest.fixture
+def default_bootstate(strategy):
+    """Set default state values as setup/teardown"""
+    strategy.transition("barebox")
+    strategy.barebox.run_check("bootchooser -a default -p default")
+
+    yield
+
+    strategy.transition("barebox")
+    strategy.barebox.run_check("bootchooser -a default -p default")
 
 
-@pytest.fixture(scope="function")
-def system0_shell(strategy):
-    try:
-        strategy.transition("system0")
-    except Exception as e:
-        traceback.print_exc()
-        pytest.exit(f"Transition into system0 shell failed: {e}", returncode=3)
+@pytest.fixture
+def booted_slot(shell):
+    """Returns booted slot."""
 
-    return strategy.shell
+    def _booted_slot():
+        [stdout] = shell.run_check("rauc status --output-format=json", timeout=60)
+        rauc_status = json.loads(stdout)
+
+        assert "booted" in rauc_status, 'No "booted" key in rauc status json found'
+
+        return rauc_status["booted"]
+
+    yield _booted_slot
 
 
-@pytest.fixture(scope="function")
-def system1_shell(strategy):
-    try:
-        strategy.transition("system1")
-    except Exception as e:
-        traceback.print_exc()
-        pytest.exit(f"Transition into system1 shell failed: {e}", returncode=3)
+@pytest.fixture
+def set_bootstate_in_bootloader(strategy, default_bootstate):
+    """Sets the given bootchooser parameters."""
 
-    return strategy.shell
+    def _set_bootstate(system0_prio, system0_attempts, system1_prio, system1_attempts):
+        strategy.transition("barebox")
+        barebox = strategy.barebox
+
+        barebox.run_check(f"state.bootstate.system0.priority={system0_prio}")
+        barebox.run_check(f"state.bootstate.system0.remaining_attempts={system0_attempts}")
+
+        barebox.run_check(f"state.bootstate.system1.priority={system1_prio}")
+        barebox.run_check(f"state.bootstate.system1.remaining_attempts={system1_attempts}")
+
+        barebox.run_check("state -s")
+
+    yield _set_bootstate
+
+
+@pytest.fixture
+def rauc_bundle(target, strategy, env, shell):
+    """Makes the RAUC bundle target-accessible at the returned location."""
+    bundle = env.config.get_image_path("rauc_bundle")
+
+    def _rauc_bundle():
+        target.activate(strategy.httpprovider)
+        return strategy.httpprovider.stage(bundle)
+
+    yield _rauc_bundle
+
+
+@pytest.fixture
+def eet(strategy):
+    eet = strategy.eet
+    yield eet
+    if eet:
+        eet.link("")
 
 
 def pytest_configure(config):
