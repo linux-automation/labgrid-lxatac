@@ -1,2 +1,2 @@
 [codespell]
-skip = ./.git,./env,./venv,./envs
+skip = ./.git,./env,./venv,./envs,console_main

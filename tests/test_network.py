@@ -129,30 +129,38 @@ def test_network_interfaces(shell):
 
 
 @pytest.mark.lg_feature("ptx-flavor")
-def test_network_nfs_io(shell):
+def test_network_nfs_io(env, target, shell):
     """Test nfs share io"""
-    ptx_works = shell.target.env.config.get_target_option(shell.target.name, "ptx-works-available")
-    assert len(ptx_works) > 0
+    ptx_works = set(env.config.get_target_option(target.name, "ptx-works-available"))
 
-    mount = shell.run_check("mount")
-    mount = "\n".join(mount)
-
+    readable = set()
+    writeable = set()
+    missing = set()
     # Iterate over all available shares and check whether io operation is possible
     for ptx_work in ptx_works:
-        assert ptx_work in mount
+        # Check if an automount unit has been created
+        _, _, rc = shell.run(f"findmnt --json {ptx_work} -t autofs")
+        if rc != 0:
+            missing.add(ptx_work)
 
-        dir_contents = shell.run_check(f"ls -1 {ptx_work}")
-        # make sure the directories contain something
-        assert len(dir_contents) > 0
+        # Make sure the directories contain something
+        dir_contents, _, rc = shell.run(f"ls -1 {ptx_work}", timeout=60)
+        # Timeout of the automount-units are a generous 30s.
+        # Let's use a much longer timeout for our commands to catch all problems on the DUT.
+        if len(dir_contents) > 0 and rc == 0:
+            readable.add(ptx_work)
 
-        shell.run_check(f"cd {ptx_work}")
+        # Check if the share is mounted readonly
+        stdout, _, rc = shell.run(f"findmnt --json {ptx_work} -t nfs4")
+        # Ignore if we do not find the mountpoint here, since one of the other tests very likely found the problem.
+        if rc == 0:
+            [fs_info] = json.loads("\n".join(stdout))["filesystems"]
+            if "rw" in fs_info["options"].split(","):
+                writeable.add(ptx_work)
 
-        # Create a file on the share
-        file, _, returncode = shell.run("mktemp -p .")
-        assert returncode == 0
-        assert len(file) > 0
-
-        shell.run_check(f"rm {file[0]}")
+    assert missing == set(), "These ptx-works do not have corresponding automount-units"
+    assert ptx_works == readable, "Mounts are not readable"
+    assert writeable == set(), "Mounts are writeable but should not be"
 
 
 def test_network_http_io(strategy, shell):

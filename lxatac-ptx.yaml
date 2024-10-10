@@ -41,17 +41,22 @@ targets:
           ethmux: "ethmux"
     options:
       ptx-works-available:
+        - /ptx/work/WORK_ALPHO
+        - /ptx/work/WORK_BOOME
+        - /ptx/work/WORK_CHIEF
+        - /ptx/work/WORK_DAETU
         - /ptx/work/WORK_EFOHW
         - /ptx/work/WORK_EIHEI
         - /ptx/work/WORK_GIEME
         - /ptx/work/WORK_IEQUE
+        - /ptx/work/WORK_JALLU
         - /ptx/work/WORK_KOOYE
+        - /ptx/work/WORK_MOHCH
         - /ptx/work/WORK_NOOTH
         - /ptx/work/WORK_SANAH
         - /ptx/work/WORK_THEIP
+        - /ptx/work/WORK_UOTHA
         - /ptx/work/WORK_XUNGI
-        - /ptx/work/WORK_JALLU
-        - /ptx/work/WORK_MOHCH
       usb_storage: /dev/disk/by-path/platform-5800d000.usb-usbv2-0:1.1:1.0-scsi-0:0:0:0
     features:
       - ptx-flavor
