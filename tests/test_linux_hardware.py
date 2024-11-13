@@ -11,30 +11,30 @@ def test_linux_i2c_bus_0_eeprom(shell):
     assert magic == "xolcIQ=="
 
 
-def test_linux_i2c_bus_1_usbhub(shell):
+def test_linux_i2c_bus_2_usbhub(shell):
     """
-    Test if a driver for the USB hub on i2cbus-1 has been loaded.
+    Test if a driver for the USB hub on i2cbus-2 has been loaded.
     """
 
-    [name] = shell.run_check("cat /sys/bus/i2c/devices/i2c-1/1-002c/name")
+    [name] = shell.run_check("cat /sys/bus/i2c/devices/2-002c/name")
     assert name == "usb2514b"
 
 
-def test_linux_i2c_bus_2_eeprom(shell):
+def test_linux_i2c_bus_1_eeprom(shell):
     """
-    Test if the config EEPROM on i2cbus-2 can be read.
+    Test if the config EEPROM on i2cbus-1 can be read.
     """
 
     # the first 4 bytes of the EEPROM will always contain the magic for the TLV data stored in there
-    [magic] = shell.run_check("dd if=/sys/bus/i2c/devices/2-0050/eeprom bs=1 count=4 status=none | base64")
+    [magic] = shell.run_check("dd if=/sys/bus/i2c/devices/1-0050/eeprom bs=1 count=4 status=none | base64")
     assert magic == "vCiN/g=="
 
 
-def test_linux_i2c_bus_2_pmic(shell):
+def test_linux_i2c_bus_1_pmic(shell):
     """
-    Test if a driver for the PMIC on i2cbus-2 has been loaded.
+    Test if a driver for the PMIC on i2cbus-1 has been loaded.
     """
-    [name] = shell.run_check("cat /sys/bus/i2c/devices/i2c-2/2-0033/name")
+    [name] = shell.run_check("cat /sys/bus/i2c/devices/1-0033/name")
     assert name == "stpmic1"
 
 
