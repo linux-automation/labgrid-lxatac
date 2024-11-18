@@ -1,7 +1,5 @@
 import json
 
-import pytest
-
 KILO = 1_000
 MEGA = 1_000 * KILO
 GIGA = 1_000 * MEGA
@@ -19,13 +17,6 @@ def test_partition_sizes(shell):
     assert part_sizes["mmcblk1p3"] in range(8 * GIGA, 16 * GIGA)
 
 
-@pytest.mark.xfail(
-    reason="There is a known bug, in which directories are created in `/srv` during the first boot. "
-    "If this happens `/srv` will not be mounted with the correct partition on consecutive boots in this slot. "
-    "Since we have r/w root-partition most of the system behaves as expected. "
-    "But changes to /srv are lost on update. "
-    "This behavior needs to be fixed - but is currently expected to fail."
-)
 def test_filesystem_sizes(shell):
     # / should have some spare space available
     stdout = shell.run_check("findmnt -b --json -o SIZE,USED /")
