@@ -39,6 +39,11 @@ def test_rauc_info_json(shell, rauc_bundle):
     Test rauc info output in JSON for a rauc bundle read via http.
     """
 
+    # Bundles during testing are not signed with release keys.
+    # But the development key is not enabled by default.
+    # So we need to enable it first.
+    shell.run_check("rauc-enable-cert devel.cert.pem")
+
     # Let rauc read the info for the rauc bundle.
     # The diversion via the tmp-file allows us to ignore any output on stderr that rauc may output.
     shell.run_check(f"rauc info {rauc_bundle()} --output-format=json > /tmp/rauc.json")
