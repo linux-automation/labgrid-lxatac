@@ -45,6 +45,7 @@ class LXATACStrategy(Strategy):
 
     status = attr.ib(default=Status.unknown)
     mmc_bootstrapped = attr.ib(default=False)
+    first_boot = attr.ib(default=True)
 
     @property
     def target_hostname(self):
@@ -88,6 +89,7 @@ class LXATACStrategy(Strategy):
         self.dfu_mode.set(False)
 
         self.mmc_bootstrapped = True
+        self.first_boot = True
 
     def wait_online(self):
         self.shell.poll_until_success("ping -c1 _gateway", timeout=60.0)
@@ -158,9 +160,17 @@ class LXATACStrategy(Strategy):
             self.barebox.boot("")
             self.barebox.await_boot()
 
+            # The first boot takes quite some time because the eMMC is
+            # re-partitioned, filesystems are created and then the TAC reboots.
+            # Subsequent boots are faster and do not need the long timeout.
+            self.shell.login_timeout = 300 if self.first_boot else 60
+
             self.target.activate(self.shell)
             self.wait_system_ready()
             self.wait_online()
+
+            # Use shorter boot timeout for subsequent boots.
+            self.first_boot = False
 
         else:
             raise StrategyError(f"no transition found from {self.status} to {status}")
