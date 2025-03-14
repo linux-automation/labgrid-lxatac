@@ -298,7 +298,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
 
     # Connect 5V via 1K Ohm to PWR_OUT
     eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
-    time.sleep(0.2)  # Give measurements a moment to settle
+    time.sleep(0.5)  # Give measurements a moment to settle
 
     # measure DUT voltage
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
@@ -309,7 +309,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
     # Switch power switch to off without the load.
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"OffFloating"')
     assert r.status_code == 204
-    time.sleep(0.2)  # Give measurements a moment to settle
+    time.sleep(0.5)  # Give measurements a moment to settle
 
     # measure DUT voltage
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
