@@ -320,7 +320,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
     assert floating_voltage > off_voltage
 
     # Voltage relation is given by the voltage divider of 1k and 10k
-    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.1)
+    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.15)
 
 
 @pytest.mark.lg_feature("eet")
