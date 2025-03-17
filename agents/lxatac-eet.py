@@ -210,7 +210,7 @@ class RelaisMatrix:
                 raise ValueError(f"Last path element {path[-1]} must be a leave")
 
             if any(p not in self.NON_LEAVES for p in path[1:-1]):
-                raise ValueError(f'All in-between path elements ({" -> ".join(path[1:-1])}) must be non-leaves')
+                raise ValueError(f"All in-between path elements ({' -> '.join(path[1:-1])}) must be non-leaves")
 
             prev_node = path[0]
 

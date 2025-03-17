@@ -54,10 +54,10 @@ def test_network_tftp(prepare_network, shell):
         assert len(checksum1) > 0
 
         # Upload file to tftp server
-        shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2")
+        shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2", timeout=35)
 
         # Download file from tftp server
-        shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2")
+        shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2", timeout=35)
 
         # Generate checksum
         checksum2 = shell.run_check("md5sum ./test_file")

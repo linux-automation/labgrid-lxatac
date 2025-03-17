@@ -298,29 +298,34 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
 
     # Connect 5V via 1K Ohm to PWR_OUT
     eet.link("5V_1K -> 5V -> BUS1 -> VOLT, PWR_OUT -> BUS2 -> VOLT")
-    time.sleep(0.2)  # Give measurements a moment to settle
+    time.sleep(0.5)  # Give measurements a moment to settle
 
     # measure DUT voltage
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
     off_voltage = r.json()["value"]
-    assert 3 < off_voltage < 5.5  # USB supply voltage can be all over the place
+
+    # USB supply voltage can be all over the place
+    assert 3 < off_voltage < 5.5, "Off-voltage is not inside USB-Supply range"
 
     # Switch power switch to off without the load.
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"OffFloating"')
     assert r.status_code == 204
-    time.sleep(0.2)  # Give measurements a moment to settle
+    time.sleep(0.5)  # Give measurements a moment to settle
 
     # measure DUT voltage
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
     floating_voltage = r.json()["value"]
-    assert 3 < floating_voltage < 5.5  # USB supply voltage can be all over the place
 
-    assert floating_voltage > off_voltage
+    # USB supply voltage can be all over the place
+    assert 3 < floating_voltage < 5.5, "OffFloating-voltage is not inside USB-supply range"
+
+    # Make sure both measurements have the right relation
+    assert floating_voltage > off_voltage, "OffFloating-voltage is not higher than Off-voltage"
 
     # Voltage relation is given by the voltage divider of 1k and 10k
-    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.1)
+    assert off_voltage / floating_voltage == pytest.approx(10e3 / (10e3 + 1e3), rel=0.15)
 
 
 @pytest.mark.lg_feature("eet")

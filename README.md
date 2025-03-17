@@ -51,6 +51,11 @@ The minimum resources needed to control an LXA TAC DUT are:
 - **HTTPProvider**: An HTTP-Server that can be used by labgrid to serve images to the DUT.
   Used to test streaming updates using RAUC.
 
+Optionally the following resource should be attached:
+
+- **USB Mass Storage**: The test `test_labgrid_resources_usb` assumes that a USB mass storage
+  device is connected to one of the host ports.
+
 The labgrid environments provided here are the ones used during development and thus contain settings specific to our
 lab.
 However, the `lxatac-vanialla.yml` is a good starting point to configure your own environment.
