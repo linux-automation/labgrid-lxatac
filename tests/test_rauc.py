@@ -60,7 +60,7 @@ def test_rauc_info_json(shell, rauc_bundle):
 
 @pytest.mark.slow
 @pytest.mark.dependency()
-def test_rauc_install(strategy, booted_slot, set_bootstate_in_bootloader, rauc_bundle):
+def test_rauc_install(strategy, booted_slot, set_bootstate_in_bootloader, rauc_bundle, log_duration):
     """
     Test if a rauc install from slot0 into slot1 works.
     """
@@ -77,7 +77,8 @@ def test_rauc_install(strategy, booted_slot, set_bootstate_in_bootloader, rauc_b
 
     # Actual installation - may take a few minutes.
     # Thus, let's use a large timeout.
-    strategy.shell.run_check(f"rauc install {rauc_bundle()}", timeout=600)
+    with log_duration("rauc install duration"):
+        strategy.shell.run_check(f"rauc install {rauc_bundle()}", timeout=600)
 
     # Power cycle and reboot into the new system.
     strategy.transition("off")
