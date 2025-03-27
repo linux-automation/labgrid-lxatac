@@ -73,9 +73,10 @@ def test_linux_spi_2_ethernet_switch(shell):
     assert int(rx_packets.split(":")[-1]) > 0
 
 
-def test_sensors(shell):
+def test_sensors(shell, record_property):
     stdout = shell.run_check("sensors -j")
     data = json.loads("".join(stdout))
 
     assert "cpu_thermal-virtual-0" in data
+    record_property("cpu_thermal-virtual-0", data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"])
     assert 10 <= data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] <= 70
