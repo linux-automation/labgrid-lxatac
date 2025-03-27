@@ -1,0 +1,5 @@
+# Additionally to this requirements you will need a working labgrid environment.
+# See README.md for more information.
+
+pytest-check
+pytest-dependency
