@@ -79,7 +79,7 @@ def test_network_tftp(prepare_network, shell, log_duration):
     "bandwidth, expected",
     ((10, pytest.approx(9, rel=0.1)), (100, pytest.approx(90, rel=0.1)), (1000, pytest.approx(350, rel=0.1))),
 )
-def test_network_performance(prepare_network, shell, bandwidth, expected):
+def test_network_performance(prepare_network, shell, record_property, bandwidth, expected):
     """Test network performance via iperf3"""
 
     try:
@@ -99,6 +99,7 @@ def test_network_performance(prepare_network, shell, bandwidth, expected):
             results = json.loads("".join(stdout), strict=False)
 
             mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
+            record_property(f"actual-bandwidth-{bandwidth}", mbps_received)
             assert mbps_received == expected
 
     finally:
