@@ -132,7 +132,7 @@ def test_network_interfaces(shell):
 
 
 @pytest.mark.lg_feature("ptx-flavor")
-def test_network_nfs_io(env, target, shell):
+def test_network_nfs_io(env, target, shell, check):
     """Test nfs share io"""
     ptx_works = set(env.config.get_target_option(target.name, "ptx-works-available"))
 
@@ -161,9 +161,12 @@ def test_network_nfs_io(env, target, shell):
             if "rw" in fs_info["options"].split(","):
                 writeable.add(ptx_work)
 
-    assert missing == set(), "These ptx-works do not have corresponding automount-units"
-    assert ptx_works == readable, "Mounts are not readable"
-    assert writeable == set(), "Mounts are writeable but should not be"
+    with check:
+        assert missing == set(), "These ptx-works do not have corresponding automount-units"
+    with check:
+        assert ptx_works == readable, "Mounts are not readable"
+    with check:
+        assert writeable == set(), "Mounts are writeable but should not be"
 
 
 def test_network_http_io(strategy, shell):
