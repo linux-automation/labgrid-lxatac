@@ -1,5 +1,7 @@
+import contextlib
 import json
 import traceback
+from time import monotonic
 
 import pytest
 
@@ -90,6 +92,25 @@ def eet(strategy):
     yield eet
     if eet:
         eet.link("")
+
+
+@pytest.fixture(scope="function")
+def log_duration(record_property):
+    """
+    Allows to log the duration of a context as a property of the executed test.
+    This can be used to measure the duration of specific commands and write the result to the junitXML.
+    Use this fixture as a context manager:
+    > with log_duration("property-name"):
+    >     time.sleep(1)
+    """
+
+    @contextlib.contextmanager
+    def duration_logger(name: str):
+        start = monotonic()
+        yield
+        record_property(name, monotonic() - start)
+
+    return duration_logger
 
 
 def pytest_configure(config):
