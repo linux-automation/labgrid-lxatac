@@ -39,7 +39,7 @@ def prepare_network(strategy, shell):
 
 
 @pytest.mark.lg_feature("ethmux")
-def test_network_tftp(prepare_network, shell):
+def test_network_tftp(prepare_network, shell, log_duration):
     """Test tftp functionality"""
 
     try:
@@ -54,10 +54,12 @@ def test_network_tftp(prepare_network, shell):
         assert len(checksum1) > 0
 
         # Upload file to tftp server
-        shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2", timeout=35)
+        with log_duration("tftp put"):
+            shell.run_check("ip netns exec dut-namespace tftp -p -r ./test_file 10.11.12.2", timeout=35)
 
         # Download file from tftp server
-        shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2", timeout=35)
+        with log_duration("tftp get"):
+            shell.run_check("ip netns exec dut-namespace tftp -g -r test_file 10.11.12.2", timeout=35)
 
         # Generate checksum
         checksum2 = shell.run_check("md5sum ./test_file")
@@ -77,7 +79,7 @@ def test_network_tftp(prepare_network, shell):
     "bandwidth, expected",
     ((10, pytest.approx(9, rel=0.1)), (100, pytest.approx(90, rel=0.1)), (1000, pytest.approx(350, rel=0.1))),
 )
-def test_network_performance(prepare_network, shell, bandwidth, expected):
+def test_network_performance(prepare_network, shell, record_property, bandwidth, expected):
     """Test network performance via iperf3"""
 
     try:
@@ -97,6 +99,7 @@ def test_network_performance(prepare_network, shell, bandwidth, expected):
             results = json.loads("".join(stdout), strict=False)
 
             mbps_received = results["end"]["sum_received"]["bits_per_second"] / 1e6
+            record_property(f"actual-bandwidth-{bandwidth}", mbps_received)
             assert mbps_received == expected
 
     finally:

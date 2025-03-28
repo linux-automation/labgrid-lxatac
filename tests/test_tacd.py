@@ -214,7 +214,7 @@ def test_tacd_http_switch_output(strategy, shell, control, states):
         ),
     ),
 )
-def test_tacd_eet_analog(strategy, shell, eet, endpoint, link, bounds, precondition):
+def test_tacd_eet_analog(strategy, shell, eet, record_property, endpoint, link, bounds, precondition):
     """Test if analog measurements work with values not equal to zero."""
     if precondition:
         r = requests.put(f"http://{strategy.network.address}/{precondition[0]}", data=precondition[1])
@@ -225,11 +225,12 @@ def test_tacd_eet_analog(strategy, shell, eet, endpoint, link, bounds, precondit
 
     r = requests.get(f"http://{strategy.network.address}/{endpoint}")
     assert r.status_code == 200
+    record_property(f"{endpoint} @ {link}", r.json()["value"])
     assert bounds[0] <= r.json()["value"] <= bounds[1]
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_uart_3v3(strategy, shell, eet):
+def test_tacd_uart_3v3(strategy, shell, eet, record_property):
     """
     Test if the 3.3V supply from the DUT UART power is enabled as expected.
 
@@ -242,11 +243,12 @@ def test_tacd_uart_3v3(strategy, shell, eet):
     time.sleep(0.5)
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
+    record_property("3V3-Supply", r.json()["value"])
     assert 3.0 < r.json()["value"] < 3.6
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_switchable(strategy, shell, eet):
+def test_tacd_dut_power_switchable(strategy, shell, eet, record_property):
     """
     Test if the tacd can switch the DUT power and if measurements are correct.
     """
@@ -259,10 +261,12 @@ def test_tacd_dut_power_switchable(strategy, shell, eet):
 
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/current")  # measure DUT current
     assert r.status_code == 200
+    record_property("On -> Current", r.json()["value"])
     assert 0.70 < r.json()["value"] < 0.85
 
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")  # measure DUT voltage
     assert r.status_code == 200
+    record_property("On -> Voltage", r.json()["value"])
     assert 11 < r.json()["value"] < 13
 
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"Off"')  # deactivate DUT power switch
@@ -273,16 +277,18 @@ def test_tacd_dut_power_switchable(strategy, shell, eet):
         f"http://{strategy.network.address}/v1/dut/feedback/current"
     )  # DUT current should be zero immediately
     assert r.status_code == 200
+    record_property("Off -> Current", r.json()["value"])
     assert -0.05 < r.json()["value"] < 0.05
 
     time.sleep(0.2)  # DUT voltage may take a few moments to get close to zero
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
+    record_property("Off -> Voltage", r.json()["value"])
     assert -0.5 < r.json()["value"] < 0.5
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_dut_power_off_floating(strategy, shell, eet):
+def test_tacd_dut_power_off_floating(strategy, shell, eet, record_property):
     """
     Test if the tacd handles Off and OffFloating correctly.
 
@@ -304,6 +310,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
     off_voltage = r.json()["value"]
+    record_property("Off -> Voltage", off_voltage)
 
     # USB supply voltage can be all over the place
     assert 3 < off_voltage < 5.5, "Off-voltage is not inside USB-Supply range"
@@ -317,6 +324,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/voltage")
     assert r.status_code == 200
     floating_voltage = r.json()["value"]
+    record_property("Floating -> Voltage", floating_voltage)
 
     # USB supply voltage can be all over the place
     assert 3 < floating_voltage < 5.5, "OffFloating-voltage is not inside USB-supply range"
@@ -329,7 +337,7 @@ def test_tacd_dut_power_off_floating(strategy, shell, eet):
 
 
 @pytest.mark.lg_feature("eet")
-def test_tacd_iobus_power_switchable(strategy, shell, eet):
+def test_tacd_iobus_power_switchable(strategy, shell, eet, record_property):
     """
     Test if the tacd can switch the IOBus power and if measurements are correct.
     """
@@ -342,10 +350,12 @@ def test_tacd_iobus_power_switchable(strategy, shell, eet):
 
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/current")  # measure IOBUs current
     assert r.status_code == 200
+    record_property("On -> Current", r.json()["value"])
     assert 0.15 < r.json()["value"] < 0.18
 
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/voltage")  # measure IOBus voltage
     assert r.status_code == 200
+    record_property("On -> Voltage", r.json()["value"])
     assert 10 < r.json()["value"] < 13
 
     r = requests.put(
@@ -358,9 +368,11 @@ def test_tacd_iobus_power_switchable(strategy, shell, eet):
         f"http://{strategy.network.address}/v1/iobus/feedback/current"
     )  # IOBus current should be zero immediately
     assert r.status_code == 200
+    record_property("Off -> Current", r.json()["value"])
     assert -0.05 < r.json()["value"] < 0.05
 
     time.sleep(2)
     r = requests.get(f"http://{strategy.network.address}/v1/iobus/feedback/voltage")
     assert r.status_code == 200
+    record_property("Off -> Voltage", r.json()["value"])
     assert -0.5 < r.json()["value"] < 0.5
