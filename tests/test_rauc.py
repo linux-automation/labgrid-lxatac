@@ -34,7 +34,7 @@ def test_rauc_status(shell):
     shell.run_check("rauc status", timeout=60)
 
 
-def test_rauc_info_json(shell, rauc_bundle):
+def test_rauc_info_json(shell, rauc_bundle, check):
     """
     Test rauc info output in JSON for a rauc bundle read via http.
     """
@@ -51,11 +51,16 @@ def test_rauc_info_json(shell, rauc_bundle):
     result = json.loads("\n".join(result))
 
     # Check if the bundle contains the metadata that we expect.
-    assert result["compatible"] == "Linux Automation GmbH - LXA TAC"
-    assert len(result["hooks"]) == 0, "There shouldn't be any hooks in the bundles"
-    assert len(result["images"]) == 2, 'The bundles should contain two images ("bootloader" & "rootfs")'
-    assert "rootfs" in result["images"][0], 'First image in bundle should be "rootfs"'
-    assert "bootloader" in result["images"][1], 'Second image in bundle should be "bootloader"'
+    with check:
+        assert result["compatible"] == "Linux Automation GmbH - LXA TAC"
+    with check:
+        assert len(result["hooks"]) == 0, "There shouldn't be any hooks in the bundles"
+    with check:
+        assert len(result["images"]) == 2, 'The bundles should contain two images ("bootloader" & "rootfs")'
+    with check:
+        assert "rootfs" in result["images"][0], 'First image in bundle should be "rootfs"'
+    with check:
+        assert "bootloader" in result["images"][1], 'Second image in bundle should be "bootloader"'
 
 
 @pytest.mark.slow
@@ -133,8 +138,10 @@ def test_bootchooser_boot_system1_and_mark_bad(strategy, booted_slot, set_bootst
 
 
 @pytest.mark.slow
-def test_bootchooser(barebox):
+def test_bootchooser(barebox, check):
     """Test if bootchooser in barebox works."""
     stdout = barebox.run_check("bootchooser -i")
-    assert stdout[0].startswith("Good targets")
-    assert stdout[1] != "none"
+    with check:
+        assert stdout[0].startswith("Good targets")
+    with check:
+        assert stdout[1] != "none"

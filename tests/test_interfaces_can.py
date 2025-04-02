@@ -4,7 +4,7 @@ import helper
 import pytest
 
 
-def test_can_interface_can0(shell):
+def test_can_interface_can0(shell, check):
     """
     Test if can0_iobus is configured correctly.
 
@@ -13,9 +13,12 @@ def test_can_interface_can0(shell):
 
     output = shell.run_check("ip -j -detail l show dev can0_iobus")
     data = json.loads("\n".join(output))
-    assert len(data) == 1
-    assert data[0]["linkinfo"]["info_data"]["bittiming"]["bitrate"] == 101052
-    assert data[0]["linkinfo"]["info_data"]["bittiming"]["sjw"] == 5
+    with check:
+        assert len(data) == 1
+    with check:
+        assert data[0]["linkinfo"]["info_data"]["bittiming"]["bitrate"] == 101052
+    with check:
+        assert data[0]["linkinfo"]["info_data"]["bittiming"]["sjw"] == 5
 
 
 def test_can_interface_can1(shell):

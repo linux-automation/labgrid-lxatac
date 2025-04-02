@@ -9,7 +9,7 @@ from labgrid.resource.remote import RemotePlaceManager
 # resources on the fly.
 
 
-def test_labgrid_resources_simple(strategy, shell):
+def test_labgrid_resources_simple(strategy, shell, check):
     """Test non-managed resources."""
 
     def retry_loop():
@@ -48,8 +48,10 @@ def test_labgrid_resources_simple(strategy, shell):
 
     serial_port_params, power_port_params, _out_0, _out_1 = retry_loop()
 
-    assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
-    assert power_port_params["model"] == "rest"
+    with check:
+        assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
+    with check:
+        assert power_port_params["model"] == "rest"
 
 
 def test_labgrid_resources_usb(strategy, shell, eet):

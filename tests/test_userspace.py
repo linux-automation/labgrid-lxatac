@@ -12,7 +12,7 @@ def test_chrony(shell):
         assert int(line[2]) > 0
 
 
-def test_switch_configuration(shell):
+def test_switch_configuration(shell, check):
     """Test that the switch is configured correctly."""
     uplink_ifname = "uplink"
 
@@ -31,8 +31,10 @@ def test_switch_configuration(shell):
     [ip_link_json] = json.loads(ip_link)
 
     # link attributes are in expected state
-    assert ip_link_json["linkinfo"]["info_data"]["stp_state"] == 0
-    assert ip_link_json["linkinfo"]["info_data"]["mcast_snooping"] == 0
+    with check:
+        assert ip_link_json["linkinfo"]["info_data"]["stp_state"] == 0
+    with check:
+        assert ip_link_json["linkinfo"]["info_data"]["mcast_snooping"] == 0
 
     [ip_addr] = shell.run_check("ip -d -j addr show tac-bridge")
     [ip_addr_json] = json.loads(ip_addr)
@@ -47,7 +49,8 @@ def test_switch_configuration(shell):
 
     # Each TAC is assigned 16 MAC addresses and the tac-bridge should use
     # the one ending in '3'.
-    assert mac[-1] == "3"
+    with check:
+        assert mac[-1] == "3"
 
     # Check if the configured v6 addresses are derived from the current MAC address.
     v6_tail = mac.split(":")
@@ -57,8 +60,10 @@ def test_switch_configuration(shell):
     v6_tail[0] ^= 0x0200
     v6_tail = ":".join(f"{a:x}" for a in v6_tail)
 
-    assert link_local_v6.endswith(v6_tail)
-    assert global_v6.endswith(v6_tail)
+    with check:
+        assert link_local_v6.endswith(v6_tail)
+    with check:
+        assert global_v6.endswith(v6_tail)
 
 
 def test_hostname(shell):

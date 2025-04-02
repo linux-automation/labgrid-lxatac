@@ -30,7 +30,8 @@ How to run these tests
 
 To run these tests yourself, you will need the following:
 
-- A functioning labgrid remote infrastructure.
+- A functioning labgrid remote infrastructure with the dependencies from
+  `requirements.txt` installed.
 - A labgrid setup providing the minimum resources needed (see below).
   This can, of course, be an LXA TAC.
 - An LXA TAC as DUT.
