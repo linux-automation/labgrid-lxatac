@@ -91,6 +91,18 @@ def test_hostname(shell, check):
         assert serial_number in etc_hostname
 
 
+def test_system_running(shell):
+    """
+    Test if the system state is running.
+    """
+
+    # This will exit non-zero if we have any other state than "running", but we are interested in the string output.
+    # So let's ignore the returncode.
+    [state], _, _ = shell.run("systemctl is-system-running")
+
+    assert state == "running"
+
+
 @pytest.fixture
 def clocktree(shell):
     """
