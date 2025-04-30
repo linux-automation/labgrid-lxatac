@@ -66,7 +66,7 @@ def test_switch_configuration(shell, check):
         assert global_v6.endswith(v6_tail)
 
 
-def test_hostname(shell):
+def test_hostname(shell, check):
     """Test whether the serial number is contained in the hostname"""
 
     [serial_number] = shell.run_check("cat /sys/firmware/devicetree/base/chosen/baseboard-factory-data/serial-number")
@@ -75,4 +75,13 @@ def test_hostname(shell):
 
     [hostname] = shell.run_check("hostname")
 
-    assert serial_number in hostname
+    with check:
+        assert serial_number in hostname
+
+    [etc_hostname] = shell.run_check("cat /etc/hostname")
+
+    with check:
+        assert etc_hostname != "localhost"
+
+    with check:
+        assert serial_number in etc_hostname
