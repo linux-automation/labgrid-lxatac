@@ -1,5 +1,9 @@
 import csv
 import json
+import re
+from dataclasses import dataclass
+
+import pytest
 
 
 def test_chrony(shell):
@@ -85,3 +89,65 @@ def test_hostname(shell, check):
 
     with check:
         assert serial_number in etc_hostname
+
+
+@pytest.fixture
+def clocktree(shell):
+    """
+    Read the clock tree from the DUT and parse it into a data structure.
+    """
+    re_entry = re.compile(r"^\s*(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\s+\d+\s+\d+\s+(\d+)\s+\S\s+(\S+)\s+")
+    re_2nd = re.compile(r"^\s+(\S+)\s+\S+\s+$")
+
+    @dataclass
+    class Clk:
+        clk_name: str
+        rate: int
+        duty: int
+        consumer: list
+
+    clks = {}
+    clk = None
+    for line in shell.run_check("cat /sys/kernel/debug/clk/clk_summary"):
+        if match := re_entry.match(line):
+            if clk:
+                clks[clk.clk_name] = clk
+            clk = Clk(clk_name=match.group(1), rate=int(match.group(2)), duty=int(match.group(3)), consumer=[])
+            if match.group(4) != "deviceless":
+                clk.consumer.append(match.group(4))
+            continue
+
+        match = re_2nd.match(line)
+        if match and match.group(1) != "deviceless":
+            clk.consumer.append(match.group(1))
+
+    return clks
+
+
+@pytest.mark.parametrize(
+    "clock_name, rate, consumer",
+    (
+        # Ethernet Clocks: Needed for the communication with the phy to work
+        ("ethptp_k", 125000000, ("5800a000.ethernet",)),
+        ("ethck_k", 125000000, ("5800a000.ethernet",)),
+        ("ethrx", 125000000, ("5800a000.ethernet",)),
+        # CAN Clock: Chosen to be 48MHz for minimum baudrate error across all rates
+        ("fdcan_k", 48000000, ("4400f000.can", "4400e000.can")),
+    ),
+)
+def test_clocktree(clocktree, check, clock_name, rate, consumer):
+    """
+    Make sure a few selected devices have their fixed clock rates applied.
+    In this test we check the association of the clock signal with the actual
+    device and the clocks rate.
+    """
+    assert clock_name in clocktree
+
+    clk = clocktree[clock_name]
+
+    with check:
+        assert clk.rate == rate
+
+    for c in consumer:
+        with check:
+            assert c in clk.consumer
