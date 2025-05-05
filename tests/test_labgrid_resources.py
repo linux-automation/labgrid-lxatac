@@ -1,3 +1,4 @@
+import logging
 import time
 
 import pytest
@@ -9,15 +10,15 @@ from labgrid.resource.remote import RemotePlaceManager
 # resources on the fly.
 
 
+@pytest.mark.slow
 def test_labgrid_resources_simple(strategy, shell, check):
     """Test non-managed resources."""
 
-    def retry_loop():
+    def retry_loop(logger):
         rpm = RemotePlaceManager.get()
         exporter = strategy.target_hostname
 
-        for _ in range(300):
-            time.sleep(1)
+        for _ in range(300 // 15):
             rpm.poll()
 
             try:
@@ -44,9 +45,13 @@ def test_labgrid_resources_simple(strategy, shell, check):
             except Exception:
                 pass
 
+            logger.info("(Still) waiting for labgrid resources to appear...")
+            time.sleep(15)
+
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
 
-    serial_port_params, power_port_params, _out_0, _out_1 = retry_loop()
+    logger = logging.getLogger("test_labgrid_resources_simple")
+    serial_port_params, power_port_params, _out_0, _out_1 = retry_loop(logger)
 
     with check:
         assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
@@ -54,16 +59,16 @@ def test_labgrid_resources_simple(strategy, shell, check):
         assert power_port_params["model"] == "rest"
 
 
+@pytest.mark.slow
 def test_labgrid_resources_usb(strategy, shell, eet):
     """Test ManagedResources (udev)."""
 
-    def retry_loop():
+    def retry_loop(logger):
         rpm = RemotePlaceManager.get()
         exporter = strategy.target_hostname
         match = ResourceMatch.fromstr(f"{exporter}/lxatac-usb-ports-p*/*")
 
-        for _ in range(300):
-            time.sleep(1)
+        for _ in range(300 // 15):
             rpm.poll()
 
             try:
@@ -81,11 +86,15 @@ def test_labgrid_resources_usb(strategy, shell, eet):
             except Exception:
                 pass
 
+            logger.info("(Still) waiting for labgrid resources to appear...")
+            time.sleep(15)
+
         pytest.fail("Failed to get resources, even after trying for 5 minutes")
 
     if eet:
         eet.link("USB1_IN -> USB1_OUT, USB2_IN -> USB2_OUT, USB3_IN -> USB3_OUT")
-    usb_resources = retry_loop()
+    logger = logging.getLogger("test_labgrid_resources_usb")
+    usb_resources = retry_loop(logger)
 
     # make sure at least one USB resource is available
     assert usb_resources != []
