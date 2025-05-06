@@ -17,7 +17,7 @@ class SystemdRun:
     This is a workaround until something like https://github.com/labgrid-project/labgrid/pull/835 is merged.
     """
 
-    _re_run = re.compile(r"^Running as unit: (run-\w+\.service);")
+    _re_run = re.compile(r"^Running as unit: (run-[\w-]+\.service);")
 
     def __init__(self, command: str, shell: labgrid.protocol.ConsoleProtocol):
         """
