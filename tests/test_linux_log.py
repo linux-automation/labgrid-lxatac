@@ -17,9 +17,11 @@ def test_kernel_messages(shell, check):
     """
 
     expected = {
+        "cacheinfo: Unable to detect cache hierarchy for CPU 0",
         "spi_stm32 44009000.spi: failed to request tx dma channel",
         "spi_stm32 44009000.spi: failed to request rx dma channel",
         "clk: failed to reparent ethck_k to pll4_p: -22",
+        "OF: /soc/bus@5c007000/adc@48003000: Read of boolean property 'vdd-supply' with a value.",
         "stm32-dwmac 5800a000.ethernet switch: Adding VLAN ID 0 is not supported",
     }
 
