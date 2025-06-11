@@ -163,3 +163,12 @@ def test_clocktree(clocktree, check, clock_name, rate, consumer):
     for c in consumer:
         with check:
             assert c in clk.consumer
+
+
+@pytest.mark.lg_feature("ptx-flavor")
+def test_ptx_ssh_keys(shell):
+    """
+    Check if there is at least one SSH key in the auto-generated authorized_keys.
+    This file is generated in our internal flavor of meta-lxatac and contains all relevant keys from our ansible.
+    """
+    shell.run_check('grep -q "^ssh-" /etc/ssh/authorized_keys.root')
