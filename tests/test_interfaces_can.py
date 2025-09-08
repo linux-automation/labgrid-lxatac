@@ -62,12 +62,6 @@ def test_can_tools(shell):
     shell.run_check("which cansend")
 
 
-@pytest.mark.xfail(
-    reason="We currently suspect the Socketcan MCAN driver to not reliably reset the berr-counter on if-down on 6.10. "
-    "At least can0_iobus is usually in an error state, since there is no other (active) CAN-node on the bus until "
-    "can1 is set up. "
-    "Thus the test fails most of the time."
-)
 @pytest.mark.lg_feature("eet")
 def test_can_traffic(shell, can_configured):
     """
