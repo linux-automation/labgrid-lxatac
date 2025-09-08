@@ -1,4 +1,5 @@
 import json
+import time
 
 import helper
 import pytest
@@ -85,3 +86,32 @@ def test_can_traffic(shell, can_configured):
         shell.run_check("cansend can0_iobus 01a#11223344AABBCCDD")
         dump = shell.run_check(f"cat {dump_file}")
         assert "  can1  01A   [8]  11 22 33 44 AA BB CC DD" in dump
+
+
+@pytest.mark.parametrize("can_interface", ("can0_iobus", "can1"))
+def test_can_berr_reset(shell, can_configured, can_interface):
+    """
+    Resetting the berr_counters works as long as the other interface is down, see:
+    https://lore.kernel.org/all/20250812-m_can-fix-state-handling-v1-0-b739e06c0a3b@pengutronix.de/
+
+    This test makes sure that we can reset the berr-counters as long as the other interface is down.
+    """
+
+    # Bring up the berr-counter
+    shell.run_check(f"ip link set {can_interface} up")
+    shell.run_check(f"cansend {can_interface} 01a#11223344AABBCCDD")
+    time.sleep(1)
+
+    # After some time the interface should be passive. Let's check that:
+    [if_state] = shell.run_check(f"ip -detail -json link show {can_interface}")
+    [if_state] = json.loads(if_state)
+    assert if_state["linkinfo"]["info_data"]["state"] == "ERROR-PASSIVE"
+    assert if_state["linkinfo"]["info_data"]["berr_counter"]["tx"] == 128
+
+    # Setting the interface down should reset the counter:
+    shell.run_check(f"ip link set {can_interface} down")
+    [if_state] = shell.run_check(f"ip -detail -json link show {can_interface}")
+    [if_state] = json.loads(if_state)
+    assert if_state["linkinfo"]["info_data"]["state"] == "STOPPED"
+    assert if_state["linkinfo"]["info_data"]["berr_counter"]["tx"] == 0
+    assert if_state["linkinfo"]["info_data"]["berr_counter"]["rx"] == 0
