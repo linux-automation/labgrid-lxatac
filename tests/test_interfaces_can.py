@@ -36,15 +36,22 @@ def test_can_interface_can1(shell):
 @pytest.fixture()
 def can_configured(shell):
     """Setup can interface for use and clean up afterward."""
-
     shell.run_check("systemctl stop lxa-iobus")
+
+    # setting both interfaces down, so we can reliably reset berr-counters
     shell.run_check("ip l set can0_iobus down")
     shell.run_check("ip l set can1 down")
+
+    # Apply configuration for can1, can0_iobus is being configured by systemd-networkd
     shell.run_check("ip link set can1 type can tq 400 prop-seg 9 phase-seg1 9 phase-seg2 6 sjw 5")
-    shell.run_check("ip l set can0_iobus up")
-    shell.run_check("ip l set can1 up")
     yield
+
+    # setting both interfaces down, so we can reliably reset berr-counters
+    shell.run_check("ip l set can0_iobus down")
     shell.run_check("ip l set can1 down")
+
+    # bring system back to operational state
+    shell.run_check("ip l set can0_iobus up")
     shell.run_check("systemctl start lxa-iobus")
 
 
@@ -68,6 +75,9 @@ def test_can_traffic(shell, can_configured):
     Check if it is possible to transfer some data from one CAN interface to the other.
     Requires an external connection between both interfaces.
     """
+
+    shell.run_check("ip l set can0_iobus up")
+    shell.run_check("ip l set can1 up")
 
     dump_file = "/tmp/can-test"
 
