@@ -1,5 +1,9 @@
 import json
 
+import labgrid.driver
+
+from lxatacstrategy import LXATACStrategy
+
 
 def test_linux_i2c_bus_0_eeprom(shell):
     """
@@ -80,3 +84,26 @@ def test_sensors(shell, record_property):
     assert "cpu_thermal-virtual-0" in data
     record_property("cpu_thermal-virtual-0", data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"])
     assert 10 <= data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] <= 70
+
+
+def test_linux_watchdog(strategy: LXATACStrategy, shell: labgrid.driver.ShellDriver):
+    """
+    Check if the system resets if we stop feeding the watchdog.
+
+    The watchdog is handled by systemd, so stopping systemd should reset the DUT.
+    """
+
+    try:
+        # systemd should be feeding the watchdog. let's kill systemd and wait for the watchdog to reset the DUT.
+        # Execute the command after sleep, so run() reads the shell prompt and returns
+        shell.run_check("(sleep 2; kill -11 1)&")
+
+        # Wait for barebox to boot. Reset reason must be "Watchdog"
+        strategy.console.expect("STM32 RCC reset reason WDG", timeout=30)
+    finally:
+        # Inform the strategy that we are not in state "shell" any more.
+        # This way clean-up actions before power off do not run.
+        strategy.status = "unknown"
+
+        # Let's switch the TAC off, so it reaches a well-defined state
+        strategy.transition("off")
