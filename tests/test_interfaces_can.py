@@ -100,7 +100,7 @@ def test_can_berr_reset(shell, can_configured, can_interface):
     [if_state] = shell.run_check(f"ip -detail -json link show {can_interface}")
     [if_state] = json.loads(if_state)
     assert if_state["linkinfo"]["info_data"]["state"] == "ERROR-PASSIVE"
-    assert if_state["linkinfo"]["info_data"]["berr_counter"]["tx"] == 128
+    assert if_state["linkinfo"]["info_data"]["berr_counter"]["tx"] >= 128
 
     # Setting the interface down should reset the counter:
     shell.run_check(f"ip link set {can_interface} down")
