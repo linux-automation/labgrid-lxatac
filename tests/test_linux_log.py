@@ -21,6 +21,9 @@ def test_kernel_messages(shell, check):
         "spi_stm32 44009000.spi: failed to request tx dma channel",
         "spi_stm32 44009000.spi: failed to request rx dma channel",
         "clk: failed to reparent ethck_k to pll4_p: -22",
+        "dwc2 49000000.usb-otg: supply vusb_d not found, using dummy regulator",
+        "dwc2 49000000.usb-otg: supply vusb_a not found, using dummy regulator",
+        "check access for rdinit=/init failed: -2, ignoring",
         "stm32-dwmac 5800a000.ethernet switch: Adding VLAN ID 0 is not supported",
     }
 
