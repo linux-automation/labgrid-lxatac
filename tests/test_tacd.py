@@ -257,7 +257,7 @@ def test_tacd_dut_power_switchable(strategy, shell, eet, record_property, check)
     )  # Connect PWRin to 12V. Load PWRout with 15R
     r = requests.put(f"http://{strategy.network.address}/v1/dut/powered", data=b'"On"')  # activate DUT power switch
     assert r.status_code == 204
-    time.sleep(0.1)  # Give measurements a moment to settle
+    time.sleep(0.5)  # Give measurements a moment to settle
 
     r = requests.get(f"http://{strategy.network.address}/v1/dut/feedback/current")  # measure DUT current
     assert r.status_code == 200
