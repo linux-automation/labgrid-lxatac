@@ -60,7 +60,7 @@ def test_switch_configuration(shell, check):
     v6_tail = mac.split(":")
     v6_tail.insert(3, "fe")
     v6_tail.insert(3, "ff")
-    v6_tail = list(int(a + b, 16) for a, b in zip(v6_tail[::2], v6_tail[1::2]))
+    v6_tail = list(int(a + b, 16) for a, b in zip(v6_tail[::2], v6_tail[1::2], strict=True))
     v6_tail[0] ^= 0x0200
     v6_tail = ":".join(f"{a:x}" for a in v6_tail)
 

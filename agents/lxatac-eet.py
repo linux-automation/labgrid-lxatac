@@ -199,7 +199,7 @@ class RelaisMatrix:
                 raise ValueError("Unknown path elements: " + ", ".join(sorted(unknown_nodes)))
 
             sp = sorted(path)
-            duplicate_nodes = set(a for a, b in zip(sp[:-1], sp[1:]) if a == b)
+            duplicate_nodes = set(a for a, b in zip(sp[:-1], sp[1:], strict=True) if a == b)
 
             if duplicate_nodes:
                 raise ValueError("Duplicate path elements: " + ", ".join(sorted(duplicate_nodes)))
@@ -213,7 +213,7 @@ class RelaisMatrix:
             if any(p not in self.NON_LEAVES for p in path[1:-1]):
                 raise ValueError(f"All in-between path elements ({' -> '.join(path[1:-1])}) must be non-leaves")
 
-            for prev_node, node in zip(path[:-1], path[1:]):
+            for prev_node, node in zip(path[:-1], path[1:], strict=True):
                 if node not in self.CONNECTIONS[prev_node]:
                     raise ValueError(f"There is not possible connection between {prev_node} and {node}")
 
