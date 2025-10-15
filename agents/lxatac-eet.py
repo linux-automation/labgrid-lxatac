@@ -213,8 +213,6 @@ class RelaisMatrix:
             if any(p not in self.NON_LEAVES for p in path[1:-1]):
                 raise ValueError(f"All in-between path elements ({' -> '.join(path[1:-1])}) must be non-leaves")
 
-            prev_node = path[0]
-
             for prev_node, node in zip(path[:-1], path[1:]):
                 if node not in self.CONNECTIONS[prev_node]:
                     raise ValueError(f"There is not possible connection between {prev_node} and {node}")
