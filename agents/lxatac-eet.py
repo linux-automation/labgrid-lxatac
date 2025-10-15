@@ -198,7 +198,8 @@ class RelaisMatrix:
             if unknown_nodes:
                 raise ValueError("Unknown path elements: " + ", ".join(sorted(unknown_nodes)))
 
-            duplicate_nodes = set(a for a, b in zip(sorted(path)[:-1], sorted(path)[1:]) if a == b)
+            sp = sorted(path)
+            duplicate_nodes = set(a for a, b in zip(sp[:-1], sp[1:]) if a == b)
 
             if duplicate_nodes:
                 raise ValueError("Duplicate path elements: " + ", ".join(sorted(duplicate_nodes)))
