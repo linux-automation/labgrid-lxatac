@@ -5,6 +5,8 @@ from time import monotonic
 
 import pytest
 
+pytest_plugins = ["postmortem"]
+
 
 @pytest.fixture(scope="function")
 def barebox(strategy):
