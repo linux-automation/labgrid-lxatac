@@ -34,7 +34,7 @@ def test_tacd_http_temperature(strategy, shell):
         (-0.01, 14, "v1/iobus/feedback/voltage"),
     ),
 )
-def test_tacd_http_adc(strategy, low, high, endpoint):
+def test_tacd_http_adc(strategy, shell, low, high, endpoint):
     """Test tacd ADC endpoints."""
     r = requests.get(f"http://{strategy.network.address}/{endpoint}")
     assert r.status_code == 200
