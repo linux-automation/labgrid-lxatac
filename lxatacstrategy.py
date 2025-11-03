@@ -204,3 +204,31 @@ class LXATACStrategy(Strategy):
         if self.ethmux:
             self.target.activate(self.ethmux)
             self.ethmux.set(True)  # Connect upstream Ethernet to Lab network as default
+
+    def postmortem_info(self) -> dict[str, list[str]]:
+        pm_info: dict[str, list[str]] = {"status": [self.status.name]}
+
+        def get_info(shell, command):
+            pm_info[command] = shell.run_check(command)
+
+        if self.status == Status.barebox:
+            get_info(self.barebox, "version")
+            get_info(self.barebox, "mount")
+            get_info(self.barebox, "global")
+            get_info(self.barebox, "nv")
+            get_info(self.barebox, "dmesg")
+        elif self.status == Status.shell:
+            get_info(self.shell, "uname -a")
+            get_info(self.shell, "cat /etc/os-release")
+            get_info(self.shell, "cat /etc/buildinfo")
+            get_info(self.shell, "dmesg -l 5")
+            get_info(self.shell, "findmnt")
+            get_info(self.shell, "lsns")
+            get_info(self.shell, "ip -brief address")
+            get_info(self.shell, "ip -brief route")
+            get_info(self.shell, "ip -brief -6 route")
+            get_info(self.shell, "df --human-readable")
+            get_info(self.shell, "free -m")
+            get_info(self.shell, "systemctl list-units --failed")
+
+        return pm_info
