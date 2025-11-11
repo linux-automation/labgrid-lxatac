@@ -1,5 +1,9 @@
 import json
 
+from pexpect import TIMEOUT
+
+from lxatacstrategy import Status
+
 
 def test_linux_i2c_bus_0_eeprom(shell):
     """
@@ -80,3 +84,35 @@ def test_sensors(shell, record_property):
     assert "cpu_thermal-virtual-0" in data
     record_property("cpu_thermal-virtual-0", data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"])
     assert 10 <= data["cpu_thermal-virtual-0"]["temp1"]["temp1_input"] <= 70
+
+
+def test_linux_watchdog(strategy):
+    """
+    Check if the system reboots, if we stop feeding the watchdog.
+
+    The watchdog is handled by systemd, so stopping systemd should reboot the DUT.
+    """
+
+    try:
+        strategy.target.deactivate(strategy.shell)
+
+        # systemd should be feeding the watchdog. let's kill systemd and wait for the watchdog to reset the DUT.
+        strategy.console.write(b"kill -11 1\n")  # This command will not return, so we can not use shell.run()
+
+        # Wait for barebox to boot. Reset reason must be "Watchdog"
+        index, _, _, _ = strategy.console.expect(
+            ["STM32 RCC reset reason WDG", TIMEOUT],
+            timeout=30,
+        )
+        if index != 0:
+            raise Exception("Device failed to reboot in time.")
+        strategy.target.activate(strategy.barebox)
+        strategy.barebox.run_check("global linux.bootargs.loglevel=loglevel=6")
+        strategy.barebox.boot("")
+        strategy.barebox.await_boot()
+        strategy.target.activate(strategy.shell)
+    except Exception as e:
+        # With any exception happening in this test we must assume that the device state is tainted.
+        # Let's switch it off, so the strategy can reboot the device into a clean state
+        strategy.transition(Status.off)
+        raise e
