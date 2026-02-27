@@ -9,7 +9,7 @@ def test_pstore_fs(shell):
     shell.run_check("test -d /sys/fs/pstore")
 
 
-def test_kernel_messages(shell, check):
+def test_kernel_messages(shell):
     """
     Test if the kernel only logs messages that we expect.
 
