@@ -9,7 +9,7 @@ def test_pstore_fs(shell):
     shell.run_check("test -d /sys/fs/pstore")
 
 
-def test_kernel_messages(shell, check):
+def test_kernel_messages(shell):
     """
     Test if the kernel only logs messages that we expect.
 
@@ -31,9 +31,12 @@ def test_kernel_messages(shell, check):
         # The following messages can happen during other tests and are harmless
         "sd 0:0:0:0: [sda] No Caching mode page found",
         "sd 0:0:0:0: [sda] Assuming drive cache: write through",
+        # These messages are accepted
+        "systemd[1]: systemd-journald-dev-log.socket: SO_PASSSEC failed: Operation not supported",
+        "systemd[1]: systemd-journald.socket: SO_PASSSEC failed: Operation not supported",
     }
 
-    messages = shell.run_check("dmesg -l warn -l err -l crit -l alert -l emerg -k")
+    messages = shell.run_check("dmesg -l warn -l err -l crit -l alert -l emerg")
     messages = set(re.sub(r"^\[\s*\d+\.\d+\] ", "", m) for m in messages)
 
     assert messages - allowed == expected
