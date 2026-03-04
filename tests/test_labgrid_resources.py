@@ -1,10 +1,9 @@
-import logging
+import ast
 import re
 import time
 
 import pytest
 from helper import SystemdRun
-from labgrid.resource.remote import RemotePlaceManager
 
 
 @pytest.fixture
@@ -32,52 +31,116 @@ def local_coordinator(shell):
 
 
 @pytest.mark.slow
-def test_labgrid_resources_simple(strategy, shell, check):
-    """Test non-managed resources."""
+def test_labgrid_resources_simple(shell, strategy, local_coordinator, check):
+    exporter = strategy.target_hostname
+    expected_resources = (
+        (
+            f"{exporter}/dut_power/NetworkPowerPort",
+            (
+                (("params", "host"), f"http://{exporter}/v1/dut/powered/compat"),
+                (("params", "index"), "0"),
+                (("params", "model"), "rest"),
+            ),
+        ),
+        (
+            f"{exporter}/http/RemoteHTTPProvider",
+            (
+                (("params", "external"), f"http://{exporter}/srv/"),
+                (("params", "host"), exporter),
+                (("params", "internal"), "/srv/www/"),
+            ),
+        ),
+        (
+            f"{exporter}/lxatac-usb-power-p1/NetworkUSBPowerPort",
+            (
+                (("params", "busnum"), 1),
+                (("params", "devnum"), 2),
+                (("params", "host"), exporter),
+                (("params", "index"), 1),
+                (("params", "path"), "1-1"),
+                (("params", "model_id"), 9492),
+                (("params", "vendor_id"), 1060),
+            ),
+        ),
+        (
+            f"{exporter}/lxatac-usb-power-p2/NetworkUSBPowerPort",
+            (
+                (("params", "busnum"), 1),
+                (("params", "devnum"), 2),
+                (("params", "host"), exporter),
+                (("params", "index"), 2),
+                (("params", "path"), "1-1"),
+                (("params", "model_id"), 9492),
+                (("params", "vendor_id"), 1060),
+            ),
+        ),
+        (
+            f"{exporter}/lxatac-usb-power-p3/NetworkUSBPowerPort",
+            (
+                (("params", "busnum"), 1),
+                (("params", "devnum"), 2),
+                (("params", "host"), exporter),
+                (("params", "index"), 3),
+                (("params", "path"), "1-1"),
+                (("params", "model_id"), 9492),
+                (("params", "vendor_id"), 1060),
+            ),
+        ),
+        (
+            f"{exporter}/out_0/HttpDigitalOutput",
+            ((("params", "url"), f"http://{exporter}/v1/output/out_0/asserted"),),
+        ),
+        (
+            f"{exporter}/out_1/HttpDigitalOutput",
+            ((("params", "url"), f"http://{exporter}/v1/output/out_1/asserted"),),
+        ),
+        (
+            f"{exporter}/serial/NetworkSerialPort",
+            (
+                (("params", "host"), exporter),
+                (("params", "extra", "path"), "/dev/ttySTM1"),
+            ),
+        ),
+        (
+            f"{exporter}/tftp/RemoteTFTPProvider",
+            (
+                (("params", "external"), "/"),
+                (("params", "host"), exporter),
+                (("params", "internal"), "/srv/tftp/"),
+            ),
+        ),
+    )
+    for _ in range(60 // 15):
+        resources = set(shell.run_check("LG_COORDINATOR=localhost labgrid-client resources"))
+        if resources.issuperset(set(x[0] for x in expected_resources)):
+            # We have found all resources in expected_resources (and possibly even more).
+            break
+        time.sleep(15)
+    else:
+        pytest.fail("Failed to get resources, even after trying for 1 minute")
 
-    def retry_loop(logger):
-        rpm = RemotePlaceManager.get()
-        exporter = strategy.target_hostname
+    def get_nested(data, path):
+        for key in path:
+            if isinstance(data, dict):
+                data = data[key]
+            else:
+                return None
+        return data
 
-        for _ in range(300 // 15):
-            rpm.poll()
+    for expected_resource in expected_resources:
+        if not expected_resource[1]:
+            # No need to get details from the exporter if no tests are given
+            continue
 
-            try:
-                resources = rpm.session.resources[exporter]
-                serial_port = resources["serial"]["RawSerialPort"]
-                power_port = resources["dut_power"]["NetworkPowerPort"]
-                out_0 = resources["out_0"]["HttpDigitalOutput"]
-                out_1 = resources["out_0"]["HttpDigitalOutput"]
+        # get currently running config
+        details = shell.run_check(f"LG_COORDINATOR=localhost labgrid-client -vv resources {expected_resource[0]}")
+        details = "".join(d for d in details if d.startswith("      "))
+        details = ast.literal_eval(details)
 
-                if not serial_port.avail:
-                    continue
-
-                if not power_port.avail:
-                    continue
-
-                if not out_0.avail:
-                    continue
-
-                if not out_1.avail:
-                    continue
-
-                return (serial_port.params, power_port.params, out_0.params, out_1.params)
-
-            except Exception:
-                pass
-
-            logger.info("(Still) waiting for labgrid resources to appear...")
-            time.sleep(15)
-
-        pytest.fail("Failed to get resources, even after trying for 5 minutes")
-
-    logger = logging.getLogger("test_labgrid_resources_simple")
-    serial_port_params, power_port_params, _out_0, _out_1 = retry_loop(logger)
-
-    with check:
-        assert serial_port_params["extra"]["path"].startswith("/dev/ttySTM")
-    with check:
-        assert power_port_params["model"] == "rest"
+        # Perform tests
+        for expected_config in expected_resource[1]:
+            with check:
+                assert get_nested(details, expected_config[0]) == expected_config[1]
 
 
 @pytest.mark.slow
