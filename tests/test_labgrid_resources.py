@@ -1,13 +1,34 @@
 import logging
+import re
 import time
 
 import pytest
-from labgrid.remote.common import ResourceMatch
+from helper import SystemdRun
 from labgrid.resource.remote import RemotePlaceManager
 
-# TODO: These tests make use of the RemotePlaceManager(), that is not meant to be used for cases like these.
-# It would probably be better to create a new labgrid remote place with a labgrid `target` and the expected
-# resources on the fly.
+
+@pytest.fixture
+def local_coordinator(shell):
+    """
+    Set up the DUT in a way, that it has a labgrid-coordinator running locally and
+    the coordinator is used by the labgrid-exporter.
+    Afterward make sure the configuration change is undone.
+    """
+    with SystemdRun(command="labgrid-coordinator -l localhost:20408", shell=shell):
+        shell.run_check("echo LABGRID_COORDINATOR_IP=localhost > /etc/labgrid/environment.local")
+        shell.run_check("echo LABGRID_COORDINATOR_PORT=20408 >> /etc/labgrid/environment.local")
+        shell.run_check("mkdir /etc/systemd/system/labgrid-exporter.service.d/")
+        shell.run_check("echo [Service] > /etc/systemd/system/labgrid-exporter.service.d/local.conf")
+        shell.run_check(
+            "echo EnvironmentFile=/etc/labgrid/environment.local >> "
+            "/etc/systemd/system/labgrid-exporter.service.d/local.conf"
+        )
+        shell.run_check("systemctl daemon-reload")
+        shell.run_check("systemctl restart labgrid-exporter")
+        yield
+        shell.run_check("rm -r /etc/systemd/system/labgrid-exporter.service.d")
+        shell.run_check("systemctl daemon-reload")
+        shell.run_check("systemctl restart labgrid-exporter")
 
 
 @pytest.mark.slow
@@ -60,41 +81,24 @@ def test_labgrid_resources_simple(strategy, shell, check):
 
 
 @pytest.mark.slow
-def test_labgrid_resources_usb(strategy, shell, eet):
-    """Test ManagedResources (udev)."""
-
-    def retry_loop(logger):
-        rpm = RemotePlaceManager.get()
-        exporter = strategy.target_hostname
-        match = ResourceMatch.fromstr(f"{exporter}/lxatac-usb-ports-p*/*")
-
-        for _ in range(300 // 15):
-            rpm.poll()
-
-            try:
-                usb_resources = []
-
-                groups = rpm.session.resources[exporter]
-                for group_name, group in sorted(groups.items()):
-                    for resource_name, resource in sorted(group.items()):
-                        if match.ismatch((exporter, group_name, resource.cls, resource_name)) and resource.avail:
-                            usb_resources.append(resource)
-
-                if len(usb_resources) > 0:
-                    return usb_resources
-
-            except Exception:
-                pass
-
-            logger.info("(Still) waiting for labgrid resources to appear...")
-            time.sleep(15)
-
-        pytest.fail("Failed to get resources, even after trying for 5 minutes")
-
+def test_labgrid_resources_usb(shell, eet, strategy, local_coordinator):
+    """
+    Test if a USB device connected to one of the usb-ports is exported correctly.
+    """
     if eet:
         eet.link("USB1_IN -> USB1_OUT, USB2_IN -> USB2_OUT, USB3_IN -> USB3_OUT")
-    logger = logging.getLogger("test_labgrid_resources_usb")
-    usb_resources = retry_loop(logger)
 
-    # make sure at least one USB resource is available
-    assert usb_resources != []
+    exporter = strategy.target_hostname
+    resource_re = re.compile(exporter + r"\/lxatac-usb-ports-p.*\/.*")
+    for _ in range(60 // 15):
+        resources = shell.run_check("LG_COORDINATOR=localhost labgrid-client resources")
+        for resource in resources:
+            match = resource_re.match(resource)
+            if match:
+                break
+        else:
+            time.sleep(15)
+            continue
+        break
+    else:
+        pytest.fail("Failed to get resources, even after trying for 1 minute")
