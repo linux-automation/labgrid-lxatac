@@ -229,6 +229,6 @@ class LXATACStrategy(Strategy):
             get_info(self.shell, "ip -brief -6 route")
             get_info(self.shell, "df --human-readable")
             get_info(self.shell, "free -m")
-            get_info(self.shell, "systemctl list-units --failed")
+            get_info(self.shell, "systemctl list-units --failed --no-pager")
 
         return pm_info
