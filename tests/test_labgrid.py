@@ -165,3 +165,46 @@ def test_labgrid_resources_usb(shell, eet, strategy, local_coordinator):
         break
     else:
         pytest.fail("Failed to get resources, even after trying for 1 minute")
+
+
+def test_labgrid_coordinator_disabled(shell):
+    """
+    The LXA TAC should ship with the labgrid-coordinator service disabled by default.
+    Make sure this is the case.
+    """
+
+    [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep -i UnitFileState")
+    assert state == "UnitFileState=disabled"
+
+    [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep -i UnitFilePreset")
+    assert state == "UnitFilePreset=disabled"
+
+
+@pytest.mark.slow
+def test_labgrid_coordinator_starting(shell):
+    """
+    A user should be able to enable the labgrid coordinator, if they wish to.
+    So let's make sure it actually starts up if the service is started.
+    """
+
+    try:
+        shell.run_check("systemctl --no-pager start labgrid-coordinator")
+
+        [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep ActiveState")
+        assert state == "ActiveState=active"
+
+        # Wait for the coordinator to bind to it's port
+        for _ in range(60 // 5):
+            _, _, rc = shell.run("ss -tlpn | grep -q 20408")
+            if rc == 0:
+                break
+            time.sleep(5)
+
+        [stdout] = shell.run_check("ss -tlpn | grep 20408")
+        assert "*:20408" in stdout
+
+        _, _, rc = shell.run("LG_COORDINATOR=localhost labgrid-client resources")
+        assert rc == 0
+
+    finally:
+        shell.run_check("systemctl --no-pager stop labgrid-coordinator")
