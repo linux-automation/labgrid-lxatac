@@ -4,10 +4,11 @@ import time
 
 import pytest
 from helper import SystemdRun
+from labgrid.driver import ShellDriver
 
 
 @pytest.fixture
-def local_coordinator(shell):
+def local_coordinator(shell: ShellDriver):
     """
     Set up the DUT in a way, that it has a labgrid-coordinator running locally and
     the coordinator is used by the labgrid-exporter.
@@ -31,7 +32,7 @@ def local_coordinator(shell):
 
 
 @pytest.mark.slow
-def test_labgrid_resources_simple(shell, strategy, local_coordinator, check):
+def test_labgrid_resources_simple(shell: ShellDriver, strategy, local_coordinator, check):
     exporter = strategy.target_hostname
     expected_resources = (
         (
@@ -167,7 +168,7 @@ def test_labgrid_resources_usb(shell, eet, strategy, local_coordinator):
         pytest.fail("Failed to get resources, even after trying for 1 minute")
 
 
-def test_labgrid_coordinator_disabled(shell):
+def test_labgrid_coordinator_disabled(shell: ShellDriver):
     """
     The LXA TAC should ship with the labgrid-coordinator service disabled by default.
     Make sure this is the case.
@@ -181,7 +182,7 @@ def test_labgrid_coordinator_disabled(shell):
 
 
 @pytest.mark.slow
-def test_labgrid_coordinator_starting(shell):
+def test_labgrid_coordinator_starting(shell: ShellDriver):
     """
     A user should be able to enable the labgrid coordinator, if they wish to.
     So let's make sure it actually starts up if the service is started.
