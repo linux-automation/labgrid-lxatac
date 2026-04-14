@@ -194,12 +194,7 @@ def test_labgrid_coordinator_starting(shell: ShellDriver):
         state = shell.run_check("systemctl show -p ActiveState --value labgrid-coordinator.service")
         assert "".join(state).strip() == "active"
 
-        # Wait for the coordinator to bind to it's port
-        for _ in range(60 // 5):
-            _, _, rc = shell.run("ss -tlpn | grep -q 20408")
-            if rc == 0:
-                break
-            time.sleep(5)
+        shell.wait_for("ss -tlpn", "20408", timeout=60.0, sleepduration=5)
 
         [stdout] = shell.run_check("ss -tlpn | grep 20408")
         assert "*:20408" in stdout
