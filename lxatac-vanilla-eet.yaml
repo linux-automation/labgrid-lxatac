@@ -11,7 +11,7 @@ targets:
         internal: /var/www/jenkins/
         external: https://www.lab.stw.pengutronix.de/jenkins/
     - RemoteLxatacEETResource:
-        host: rlabc-srv
+        host: rlabC-srv.labmgmt.stw.pengutronix.de
         usbpath: 2-2.1.1:1.0
     drivers:
     - LxatacEETDriver: {}
