@@ -34,6 +34,13 @@ def test_kernel_messages(shell):
         # These messages are accepted
         "systemd[1]: systemd-journald-dev-log.socket: SO_PASSSEC failed: Operation not supported",
         "systemd[1]: systemd-journald.socket: SO_PASSSEC failed: Operation not supported",
+        # These messages can happen, if USB devices get disconnected during other tests
+        "usb usb1-port1: Cannot enable. Maybe the USB cable is bad?",
+        "usb usb1-port1: cannot reset (err = -32)",
+        "usb usb1-port2: Cannot enable. Maybe the USB cable is bad?",
+        "usb usb1-port2: cannot reset (err = -32)",
+        "usb usb1-port3: Cannot enable. Maybe the USB cable is bad?",
+        "usb usb1-port3: cannot reset (err = -32)",
     }
 
     messages = shell.run_check("dmesg -l warn -l err -l crit -l alert -l emerg")
