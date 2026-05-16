@@ -4,10 +4,11 @@ import time
 
 import pytest
 from helper import SystemdRun
+from labgrid.driver import ShellDriver
 
 
 @pytest.fixture
-def local_coordinator(shell):
+def local_coordinator(shell: ShellDriver):
     """
     Set up the DUT in a way, that it has a labgrid-coordinator running locally and
     the coordinator is used by the labgrid-exporter.
@@ -31,7 +32,7 @@ def local_coordinator(shell):
 
 
 @pytest.mark.slow
-def test_labgrid_resources_simple(shell, strategy, local_coordinator, check):
+def test_labgrid_resources_simple(shell: ShellDriver, strategy, local_coordinator, check):
     exporter = strategy.target_hostname
     expected_resources = (
         (
@@ -167,21 +168,21 @@ def test_labgrid_resources_usb(shell, eet, strategy, local_coordinator):
         pytest.fail("Failed to get resources, even after trying for 1 minute")
 
 
-def test_labgrid_coordinator_disabled(shell):
+def test_labgrid_coordinator_disabled(shell: ShellDriver):
     """
     The LXA TAC should ship with the labgrid-coordinator service disabled by default.
     Make sure this is the case.
     """
 
-    [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep -i UnitFileState")
-    assert state == "UnitFileState=disabled"
+    state = shell.run_check("systemctl show -p UnitFileState --value labgrid-coordinator.service")
+    assert "".join(state).strip() == "disabled"
 
-    [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep -i UnitFilePreset")
-    assert state == "UnitFilePreset=disabled"
+    state = shell.run_check("systemctl show -p UnitFilePreset --value labgrid-coordinator.service")
+    assert "".join(state).strip() == "disabled"
 
 
 @pytest.mark.slow
-def test_labgrid_coordinator_starting(shell):
+def test_labgrid_coordinator_starting(shell: ShellDriver):
     """
     A user should be able to enable the labgrid coordinator, if they wish to.
     So let's make sure it actually starts up if the service is started.
@@ -190,15 +191,10 @@ def test_labgrid_coordinator_starting(shell):
     try:
         shell.run_check("systemctl --no-pager start labgrid-coordinator")
 
-        [state] = shell.run_check("systemctl --no-pager show labgrid-coordinator.service | grep ActiveState")
-        assert state == "ActiveState=active"
+        state = shell.run_check("systemctl show -p ActiveState --value labgrid-coordinator.service")
+        assert "".join(state).strip() == "active"
 
-        # Wait for the coordinator to bind to it's port
-        for _ in range(60 // 5):
-            _, _, rc = shell.run("ss -tlpn | grep -q 20408")
-            if rc == 0:
-                break
-            time.sleep(5)
+        shell.wait_for("ss -tlpn", "20408", timeout=60.0, sleepduration=5)
 
         [stdout] = shell.run_check("ss -tlpn | grep 20408")
         assert "*:20408" in stdout
