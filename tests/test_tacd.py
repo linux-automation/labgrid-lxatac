@@ -20,6 +20,11 @@ def test_tacd_http_temperature(strategy, shell):
 
     stdout = shell.run_check("sensors -j")
     data = json.loads("".join(stdout))
+
+    # We have seen two variants of the name. Make sure both work.
+    if "cpu_thermal-virtual-0" in data:
+        data["cpu_thermal_0-virtual-0"] = data["cpu_thermal-virtual-0"]
+
     assert "cpu_thermal_0-virtual-0" in data
 
     assert data["cpu_thermal_0-virtual-0"]["temp1"]["temp1_input"] == pytest.approx(temperature, abs=3)
