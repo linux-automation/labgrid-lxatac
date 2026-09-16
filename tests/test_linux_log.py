@@ -17,7 +17,6 @@ def test_kernel_messages(shell):
     """
 
     expected = {
-        "cacheinfo: Unable to detect cache hierarchy for CPU 0",
         "clk: failed to reparent ethck_k to pll4_p: -22",
         "dwc2 49000000.usb-otg: supply vusb_d not found, using dummy regulator",
         "dwc2 49000000.usb-otg: supply vusb_a not found, using dummy regulator",
@@ -26,6 +25,10 @@ def test_kernel_messages(shell):
     }
 
     allowed = {
+        # This message is present in the v26.07.1 stable release (kernel 7.1.6)
+        # but not in the development branch (kernel 7.2.6).
+        # TODO: Remove once the next stable release is published.
+        "cacheinfo: Unable to detect cache hierarchy for CPU 0",
         # The following messages can happen during other tests and are harmless
         "sd 0:0:0:0: [sda] No Caching mode page found",
         "sd 0:0:0:0: [sda] Assuming drive cache: write through",
