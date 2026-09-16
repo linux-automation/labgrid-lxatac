@@ -121,7 +121,7 @@ class LXATACStrategy(Strategy):
             if self.status == Status.shell:
                 # Cleanly shut down the labgrid exporter to help the
                 # coordinator clean up stale resources.
-                self.shell.run("systemctl stop labgrid-exporter", timeout=90)
+                self.shell.run("timeout 80 systemctl stop labgrid-exporter", timeout=90)
 
                 # Sync all pending changes to eMMC before switching off power
                 self.shell.run_check("sync")
