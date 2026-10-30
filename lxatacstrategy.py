@@ -4,6 +4,7 @@ import attr
 from labgrid import step, target_factory
 from labgrid.driver import ExecutionError
 from labgrid.strategy import Strategy, StrategyError
+from labgrid.strategy.common import never_retry
 
 # Possible state transitions:
 #
@@ -105,6 +106,7 @@ class LXATACStrategy(Strategy):
             self.shell.run("systemctl list-units --failed --no-legend --plain --no-pager")
             raise
 
+    @never_retry
     @step(args=["status"])
     def transition(self, status, *, step):
         if not isinstance(status, Status):
@@ -199,6 +201,7 @@ class LXATACStrategy(Strategy):
 
         self.status = status
 
+    @never_retry
     @step(args=["status"])
     def force(self, status):
         if not isinstance(status, Status):
